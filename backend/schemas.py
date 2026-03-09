@@ -21,22 +21,8 @@ class UserRead(UserBase):
     model_config = ConfigDict(from_attributes=True) # SQLAlchemyと連携
 
 
-# --- 画像関係 ---
-class RecipeImageCreate(BaseModel):
-    image_path: str
-    is_thumbnail: bool = False
-    is_make_map: bool = False # 追加
-    items: List[CosmeticCreate] = [] # 画像ごとにアイテムを持つ
-
-class RecipeImageRead(BaseModel):
-    id: int
-    image_path: str
-    is_thumbnail: bool
-    class Config:
-        from_attributes = True
-
-# コスメ入力用
-class CosmeticCreate(BaseModel):
+# --- コスメマスタ用 ---
+class CosmeticMasterBase(BaseModel):
     category: str
     name: str
     brand: str
@@ -44,62 +30,79 @@ class CosmeticCreate(BaseModel):
     color_hex: str
     transparency: int
     image_url: Optional[str] = None
+
+class CosmeticMasterCreate(CosmeticMasterBase):
+    pass
+
+class CosmeticMasterRead(CosmeticMasterBase):
+    id: int
+    pccs_tone: str
+    pccs_hue: int
+    r: int
+    g: int
+    b: int
+    model_config = ConfigDict(from_attributes=True)
+
+# --- アイテム（ピン）用 ---
+class ItemBase(BaseModel):
     x_position: Optional[float] = None
     y_position: Optional[float] = None
     pin_memo: Optional[str] = None
     is_default_pin: bool = False 
     pin_label: Optional[str] = None 
-    
 
-# アイテム表示用
-class CosmeticRead(BaseModel):
+class ItemCreate(ItemBase):
+    # 既存のCosmeticMasterを選択する場合はIDを、新規登録する場合はマスタ情報を送る
+    cosmetic_master_id: Optional[int] = None
+    # 新規登録用（オプション）
+    category: Optional[str] = None
+    name: Optional[str] = None
+    brand: Optional[str] = None
+    texture: Optional[str] = None
+    color_hex: Optional[str] = None
+    transparency: Optional[int] = 100
+    image_url: Optional[str] = None
+
+class ItemRead(ItemBase):
     id: int
-    category: str
-    name: str
-    brand: str
-    pccs_tone: str
-    pccs_hue: int
-    color_hex: str
-    texture: str
-    x_position: Optional[float] = None
-    y_position: Optional[float] = None
-    pin_memo: Optional[str] = None
-    
-    class Config:
-        from_attributes = True # これを入れるとDBモデルをそのまま変換できます
-        
+    cosmetic_master: Optional[CosmeticMasterRead] = None
+    model_config = ConfigDict(from_attributes=True)
 
-        
-# 日記（レシピ）入力用
+# --- 画像関係 ---
+class RecipeImageCreate(BaseModel):
+    image_path: str
+    is_thumbnail: bool = False
+    is_make_map: bool = False
+    items: List[ItemCreate] = [] # 画像ごとにアイテムを持つ
+
+class RecipeImageRead(BaseModel):
+    id: int
+    image_path: str
+    is_thumbnail: bool
+    is_make_map: bool
+    items: List[ItemRead] = []
+    model_config = ConfigDict(from_attributes=True)
+
+# --- 日記（レシピ）用 ---
 class RecipeCreate(BaseModel):
     title: str
-    description: str
-    scene_tag: str
+    description: Optional[str] = None
+    scene_tag: Optional[str] = None
     date: Optional[datetime.date] = None
+    # is_public を削除
     images: List[RecipeImageCreate] = []
-    is_public: bool = False
-    images: List[RecipeImageCreate] # 画像（とその中のアイテム）のリスト
-    # コスメのリストを一緒に受け取る
-    items: List[CosmeticCreate]
-    
-    
 
-# 日記（レシピ）表示用
 class RecipeRead(BaseModel):
     id: int
     author_id: int
-    is_public: bool
     title: str
-    description: str
-    scene_tag: str
+    description: Optional[str] = None
+    scene_tag: Optional[str] = None
     date: datetime.date
     images: List[RecipeImageRead] = []
-    items: List[CosmeticRead] # ここに紐付いたアイテムが入る
 
-    class Config:
-        from_attributes = True
-        
-# schemas.py の一番最後に追加
+    model_config = ConfigDict(from_attributes=True)
+
+# 循環参照などの解決
 RecipeRead.model_rebuild()
 RecipeCreate.model_rebuild()
-CosmeticRead.model_rebuild()

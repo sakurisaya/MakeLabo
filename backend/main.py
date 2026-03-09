@@ -13,6 +13,8 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from contextlib import asynccontextmanager
 from jose import JWTError, jwt
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func
+from constants import DEFAULT_PIN_LABELS
 
 
 database.init_db()
@@ -181,12 +183,12 @@ async def upload_image(file: UploadFile = File(...)):
 from color_utils import find_closest_pccs, hex_to_rgb # 追加
 
 @app.post("/cosmetics/")
-def create_cosmetic(cosmetic: schemas.CosmeticCreate, db: Session = Depends(get_db)):
+def create_cosmetic(cosmetic: schemas.CosmeticMasterCreate, db: Session = Depends(get_db)):
     # 自動判定ロジックの発動
     pccs = find_closest_pccs(cosmetic.color_hex)
     rgb = hex_to_rgb(cosmetic.color_hex)
     
-    new_cosmetic = models.Cosmetic(
+    new_cosmetic = models.CosmeticMaster(
         category=cosmetic.category,
         name=cosmetic.name,
         brand=cosmetic.brand,
@@ -198,7 +200,7 @@ def create_cosmetic(cosmetic: schemas.CosmeticCreate, db: Session = Depends(get_
         g=rgb[1],                    # 自動抽出されたG
         b=rgb[2],                    # 自動抽出されたB
         transparency=cosmetic.transparency,
-        item_type="cosmetic",
+        image_url=cosmetic.image_url
     )
     db.add(new_cosmetic)
     db.commit()
@@ -221,69 +223,92 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-@app.post("/recipes/",response_model=schemas.RecipeRead)
+@app.post("/recipes/", response_model=schemas.RecipeRead)
 def create_recipe(
     recipe: schemas.RecipeCreate, 
     db: Session = Depends(get_db),
-    # ログイン中のユーザーを自動で取得する
-    current_user: models.User = Depends(get_current_user)):
-    recipe_date = recipe.date if recipe.date else date.today()
+    current_user: models.User = Depends(get_current_user)
+):
+    recipe_date = recipe.date if recipe.date else datetime.date.today()
+    
     # 1. 日記（Recipe）本体を作成
     new_recipe = models.Recipe(
         title=recipe.title,
         description=recipe.description,
         scene_tag=recipe.scene_tag,
         date=recipe_date,
-        is_public=recipe.is_public,
-        author_id=current_user.id  # 誰が書いたかを記録
+        author_id=current_user.id
     )
     db.add(new_recipe)
-    # db.commit()     IDを確定させる
-    # db.refresh(new_recipe)
     db.flush() # IDを確定させる
-    return new_recipe
-    
-    #  画像（RecipeImage）の保存
+
+    # 2. 画像（RecipeImage）とその中のアイテム（Item）の保存
     if recipe.images:
         for img_data in recipe.images:
             new_image = models.RecipeImage(
-            recipe_id=new_recipe.id,
-            image_path=img_data.image_path,
-            is_thumbnail=img_data.is_thumbnail,
-            is_make_map=img_data.is_make_map
-        )
-        db.add(new_image)
-        db.flush() # 画像IDを確定させる
+                recipe_id=new_recipe.id,
+                image_path=img_data.image_path,
+                is_thumbnail=img_data.is_thumbnail,
+                is_make_map=img_data.is_make_map
+            )
+            db.add(new_image)
+            db.flush()
 
-    #  付属するコスメ（Items）をループで回して作成・紐付け
-    for item_data in recipe.items:
-        pccs = find_closest_pccs(item_data.color_hex)
-        rgb = hex_to_rgb(item_data.color_hex)
-        
-        new_item = models.Cosmetic(
-            category=item_data.category,
-            name=item_data.name,
-            brand=item_data.brand,
-            texture=item_data.texture,
-            pccs_tone=pccs["tone"],
-            pccs_hue=pccs["hue"],
-            color_hex=item_data.color_hex,
-            r=rgb[0], g=rgb[1], b=rgb[2],
-            transparency=item_data.transparency,
-            image_url=item_data.image_url,
-            item_type="cosmetic",
-            recipe_id=new_recipe.id,  # 日記のIDと紐付け
-            x_position=item_data.x_position,
-            y_position=item_data.y_position,
-            pin_memo=item_data.pin_memo,
-            is_default_pin=item_data.is_default_pin,
-            pin_label=item_data.pin_label
-        )
-        db.add(new_item)
+            # デフォルトピンの生成ロジック
+            # 「メイクマップ（is_make_map=True）」なら、初期状態で部位に応じたピンを作る
+            if img_data.is_make_map:
+                for label in DEFAULT_PIN_LABELS:
+                    default_item = models.Item(
+                        image_id=new_image.id,
+                        pin_label=label,
+                        is_default_pin=True,
+                        # 初期座標はフロントで調整するが、一旦NULLまたは(0,0)等
+                        x_position=0.0,
+                        y_position=0.0
+                    )
+                    db.add(default_item)
+
+            # 送信された既存のアイテム（ピン）を保存
+            for item_data in img_data.items:
+                master_id = item_data.cosmetic_master_id
+                
+                # アイテム作成時に一緒にコスメを新規登録する場合
+                if not master_id and item_data.color_hex:
+                    pccs = find_closest_pccs(item_data.color_hex)
+                    rgb = hex_to_rgb(item_data.color_hex)
+                    new_master = models.CosmeticMaster(
+                        category=item_data.category or "Other",
+                        name=item_data.name or "New Cosmetic",
+                        brand=item_data.brand or "Unknown",
+                        texture=item_data.texture or "None",
+                        color_hex=item_data.color_hex,
+                        r=rgb[0], g=rgb[1], b=rgb[2],
+                        pccs_tone=pccs["tone"],
+                        pccs_hue=pccs["hue"],
+                        transparency=item_data.transparency or 100,
+                        image_url=item_data.image_url
+                    )
+                    db.add(new_master)
+                    db.flush()
+                    master_id = new_master.id
+
+                # アイテム（ピン）を作成または更新
+                # 注意: is_default_pinで既に作成されている場合は上書きにする等の制御が必要だが、
+                # ここでは新規追加として扱う
+                new_item = models.Item(
+                    cosmetic_master_id=master_id,
+                    image_id=new_image.id,
+                    x_position=item_data.x_position,
+                    y_position=item_data.y_position,
+                    pin_memo=item_data.pin_memo,
+                    is_default_pin=item_data.is_default_pin,
+                    pin_label=item_data.pin_label
+                )
+                db.add(new_item)
     
     db.commit()
     db.refresh(new_recipe)
-    return {"message": "Recipe and items created successfully", "recipe_id": new_recipe.id}
+    return new_recipe
 
 @app.get("/recipes/", response_model=list[schemas.RecipeRead]) # response_modelを指定
 def get_recipes(
@@ -329,13 +354,3 @@ def read_my_recipes(
         .filter(models.Recipe.author_id == current_user.id)\
         .order_by(models.Recipe.date.desc())\
         .all()
-
-# 共有ギャラリー：みんなの自信作（is_public=True）だけを閲覧する
-@app.get("/gallery/", response_model=List[schemas.RecipeRead])
-def read_public_gallery(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    # 誰が書いたかに関わらず、公開(is_public=True)設定のものだけを取得
-    public_recipes = db.query(models.Recipe).filter(models.Recipe.is_public == True).all()
-    return public_recipes

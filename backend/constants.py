@@ -16,3 +16,6 @@ PCCS_COLOR_MAP = {
 
 # テクスチャの初期候補
 DEFAULT_TEXTURES = ["ツヤ", "マット", "ラメ", "パール", "サテン", "グリッター", "メタリック", "シアー"]
+
+# デフォルトピンの構成
+DEFAULT_PIN_LABELS = ["base", "contour", "eyes", "cheek", "lip"]

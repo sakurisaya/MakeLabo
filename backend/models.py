@@ -14,15 +14,31 @@ class User(Base):
     is_admin = Column(Boolean, default=False) 
     is_active = Column(Boolean, default=True)
 
-# 親クラス：アイテム共通
-class Item(Base):
-    __tablename__ = "items"
+#コスメ情報
+class CosmeticMaster(Base):
+    __tablename__ = "cosmetic_masters"
     id = Column(Integer, primary_key=True, index=True)
     category = Column(String)
     name = Column(String)
     brand = Column(String)
-    item_type = Column(String) # 'cosmetic', 'nail', etc.
+    texture = Column(String)
     image_url = Column(String, nullable=True) # コスメ自体の写真
+
+    # 色彩データ（PCCS）
+    pccs_tone = Column(String)
+    pccs_hue = Column(Integer)
+    color_hex = Column(String)
+    r = Column(Integer); g = Column(Integer); b = Column(Integer)
+    transparency = Column(Integer)
+
+# アイテム共通
+class Item(Base):
+    __tablename__ = "items"
+    id = Column(Integer, primary_key=True, index=True)
+    
+    cosmetic_master_id = Column(Integer, ForeignKey("cosmetic_masters.id"))
+    cosmetic_master = relationship("CosmeticMaster")
+    
     image_id = Column(Integer, ForeignKey("recipe_images.id"))
     image = relationship("RecipeImage", back_populates="items")    
     
@@ -33,25 +49,10 @@ class Item(Base):
     # その部位への使い方のメモ（例：「目尻に広めに」）
     pin_memo = Column(String, nullable=True)
     
-    # ✨ 追加: デフォルトピン（固定部位）かどうかの判定用
+    # デフォルトピン（固定部位）かどうかの判定用
     is_default_pin = Column(Boolean, default=False)
     pin_label = Column(String, nullable=True) # "Lip", "Eye", etc.
 
-    
-# 子クラス：コスメ（色彩仕様）
-class Cosmetic(Item):
-    texture = Column(String)      # 質感
-    
-    # 色彩データ（PCCS）
-    pccs_tone = Column(String)    # V, b, s, dp, lt, sf, d, dk, p, ltg, g, dkg
-    pccs_hue = Column(Integer)     # 1 ~ 24
-    
-    # 画面表示・計算用データ
-    color_hex = Column(String)     # #FFFFFF
-    r = Column(Integer)
-    g = Column(Integer)
-    b = Column(Integer)
-    transparency = Column(Integer) # 透け感 (0-100)
 
 
 # 日記（レシピ）
@@ -65,7 +66,6 @@ class Recipe(Base):
     image_url = Column(String, nullable=True) # 画像の保存先パス
     # items = relationship("Cosmetic", backref="recipe")
     images = relationship("RecipeImage", backref="recipe", cascade="all, delete-orphan")
-    is_public = Column(Boolean, default=False)
     author_id = Column(Integer, ForeignKey("users.id")) #「誰の投稿か」を示す紐付け
     
 class RecipeImage(Base):
