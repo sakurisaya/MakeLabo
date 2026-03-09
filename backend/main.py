@@ -1,214 +1,122 @@
-from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
-from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
-import models, schemas, database
 import datetime
-import uuid
-import os
-from typing import List, Optional
-from PIL import Image
 import io
-from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+import os
+import uuid
 from contextlib import asynccontextmanager
-from jose import JWTError, jwt
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import func
+from typing import List, Optional
+
+import database
+import models
+import schemas
+from color_utils import find_closest_pccs, hex_to_rgb
 from constants import DEFAULT_PIN_LABELS
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from PIL import Image
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
+# --- 1. 定数・パス・セキュリティ設定 ---
 
+# アプリの保存先などを絶対パスで定義（どこから起動しても動くように）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "images")
+os.makedirs(UPLOAD_DIR, exist_ok=True) # フォルダがなければ作成
+
+# JWT（トークン）認証用の設定
+# 本番環境では SECRET_KEY を複雑なランダム文字列に変更してください
+SECRET_KEY = "your-super-secret-key-change-it-for-production"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # トークンの有効期限（24時間）
+
+# パスワードのハッシュ化（生パスワードを保存しない仕組み）
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# OAuth2のトークン受け渡しルールを定義
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+# データベースのテーブルを初期化（まだなければ作成）
 database.init_db()
 
 
-# DBを使えるようにする
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-        
+# --- 2. ユーザー初期化 & ライフサイクル ---
 
+def create_initial_users(db: Session):
+    """
+    アプリ起動時に固定のアカウント (master, test1) を自動で作成。
+    既に存在する場合は何もしない。
+    """
+    # 1. 閲覧用の master (見本データ作成用)
+    if not db.query(models.User).filter(models.User.username == "master").first():
+        db.add(models.User(
+            username="master",
+            hashed_password=pwd_context.hash("master1234"),
+            is_admin=True
+        ))
+        print("Account created: user=master, pass=master1234")
+    
+    # 2. 実際に操作を試すための test1
+    if not db.query(models.User).filter(models.User.username == "test1").first():
+        db.add(models.User(
+            username="test1",
+            hashed_password=pwd_context.hash("test1234"),
+            is_admin=False
+        ))
+        print("Account created: user=test1, pass=test1234")
+    
+    db.commit()
 
-##マスターアカウント確認
-# 1. 起動時に実行する処理を定義
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # アプリ起動時の処理
+    """アプリが起動・終了する際の特殊イベントを管理"""
     db = database.SessionLocal()
     try:
-        # 管理者がいなければ作成
-        create_first_admin(db)
+        create_initial_users(db)
     finally:
         db.close()
     yield
-    # アプリ終了時の処理（あれば）
 
-# 2. FastAPIのインスタンス化の際に lifespan を登録
+# FastAPIアプリのインスタンス生成
 app = FastAPI(lifespan=lifespan)
 
+# CORS制限の解除（フロントエンドとバックエンドが通信できるように許可）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # テスト用
+    allow_origins=["*"], # どのドメインからも許可（開発用）
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 3. 実際の作成関数（パスワードは自分の好きなものに変えてね）
-def create_first_admin(db: Session):
-    # ユーザー名 "master" がいるか確認
-    admin = db.query(models.User).filter(models.User.username == "master").first()
-    if not admin:
-        new_admin = models.User(
-            username="master",
-            hashed_password=get_password_hash("master1234"), # ログインに使うパスワード
-            is_admin=True
-        )
-        db.add(new_admin)
-        db.commit()
-        print("🚀 Master account created: user=master, pass=master1234")
+# 保存された画像（static/images内）をURLで公開（http://localhost:8000/static/...）
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
-# パスワードハッシュ化の設定
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-# --- ヘルパー関数 ---
-def get_password_hash(password):
-    return pwd_context.hash(password)
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+# --- 3. 認証・DB操作の依存関係 (Dependencies) ---
 
-# JWTの設定（トークンの秘密鍵と有効期限）
-SECRET_KEY = "your-super-secret-key-change-it-for-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+def get_db():
+    """リクエストごとにDB接続を確立し、終わったら自動で閉じる"""
+    db = database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-# ---トークン作成用の関数 ---
 def create_access_token(data: dict):
+    """ログイン成功時に、署名付きのJWTトークンを発行する"""
     to_encode = data.copy()
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# ---ガードマン関数 (get_current_admin_user) ---
-async def get_current_admin_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(status_code=401, detail="Could not validate credentials")
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
-    
-    user = db.query(models.User).filter(models.User.username == username).first()
-    if user is None or not user.is_admin:
-        raise HTTPException(status_code=403, detail="Not enough permissions")
-    return user
-
-# ---ログイン（トークン発行）API ---
-# Swaggerの「Authorize」ボタンやフロントエンドから呼ばれます
-@app.post("/token")
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(OAuth2PasswordRequestForm), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
-    
-    access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
-
-# ユーザ登録
-@app.post("/admin/create-user/", response_model=schemas.UserRead)
-def create_new_user(
-    user_in: schemas.UserCreate, 
-    current_user: models.User = Depends(get_current_admin_user), # 管理者チェック
-    db: Session = Depends(get_db)
-):
-    # ユーザー名の重複チェック
-    db_user = db.query(models.User).filter(models.User.username == user_in.username).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Username already registered")
-    
-    # パスワードをハッシュ化して保存
-    new_user = models.User(
-        username=user_in.username,
-        hashed_password=get_password_hash(user_in.password),
-        is_admin=user_in.is_admin # 管理者が作成するので、管理者権限の付与も可能
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
-
-# --- 画像保存の設定 ---
-UPLOAD_DIR = "static/images"
-if not os.path.exists(UPLOAD_DIR):
-    os.makedirs(UPLOAD_DIR)
-
-# 静的ファイルの提供設定 (http://localhost:8000/static/... でアクセス可能に)
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.post("/upload/")
-async def upload_image(file: UploadFile = File(...)):
-    extension = ".jpg" # 圧縮効率がいいので一律JPGにする
-    file_name = f"{uuid.uuid4()}{extension}"
-    file_path = os.path.join(UPLOAD_DIR, file_name)
-
-    # 1. 画像をメモリ上に読み込む
-    image_content = await file.read()
-    img = Image.open(io.BytesIO(image_content))
-
-    # 2. RGB形式に変換（PNGの透過やHEIC対策）
-    if img.mode != "RGB":
-        img = img.convert("RGB")
-
-    # 3. リサイズ設定（例：長辺を1200pxに制限）
-    max_size = 1200
-    if max(img.width, img.height) > max_size:
-        # アスペクト比を維持して計算
-        ratio = max_size / max(img.width, img.height)
-        new_size = (int(img.width * ratio), int(img.height * ratio))
-        img = img.resize(new_size, Image.Resampling.LANCZOS) # 高品質なリサイズ
-
-    # 4. 圧縮して保存
-    # optimize=True でファイルサイズを削減、quality=85 は見た目と軽さのベストバランス
-    img.save(file_path, "JPEG", quality=85, optimize=True)
-
-    return {"image_url": f"/static/images/{file_name}"}
-
-
-
-# コスメを登録するAPI（POSTメソッド）
-from color_utils import find_closest_pccs, hex_to_rgb # 追加
-
-@app.post("/cosmetics/")
-def create_cosmetic(cosmetic: schemas.CosmeticMasterCreate, db: Session = Depends(get_db)):
-    # 自動判定ロジックの発動
-    pccs = find_closest_pccs(cosmetic.color_hex)
-    rgb = hex_to_rgb(cosmetic.color_hex)
-    
-    new_cosmetic = models.CosmeticMaster(
-        category=cosmetic.category,
-        name=cosmetic.name,
-        brand=cosmetic.brand,
-        texture=cosmetic.texture,
-        pccs_tone=pccs["tone"],      # 自動計算されたトーン
-        pccs_hue=pccs["hue"],        # 自動計算された色相
-        color_hex=cosmetic.color_hex,
-        r=rgb[0],                    # 自動抽出されたR
-        g=rgb[1],                    # 自動抽出されたG
-        b=rgb[2],                    # 自動抽出されたB
-        transparency=cosmetic.transparency,
-        image_url=cosmetic.image_url
-    )
-    db.add(new_cosmetic)
-    db.commit()
-    db.refresh(new_cosmetic)
-    return new_cosmetic
-
-# ログインさえしていれば通す
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """
+    リクエストヘッダーのトークンを検証し、現在ログイン中のユーザー情報を取得する。
+    トークンが無効なら 401エラー を返す「ガード」として機能する。
+    """
     credentials_exception = HTTPException(status_code=401, detail="Could not validate credentials")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -223,134 +131,121 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-@app.post("/recipes/", response_model=schemas.RecipeRead)
-def create_recipe(
-    recipe: schemas.RecipeCreate, 
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
-):
-    recipe_date = recipe.date if recipe.date else datetime.date.today()
-    
-    # 1. 日記（Recipe）本体を作成
-    new_recipe = models.Recipe(
-        title=recipe.title,
-        description=recipe.description,
-        scene_tag=recipe.scene_tag,
-        date=recipe_date,
-        author_id=current_user.id
-    )
-    db.add(new_recipe)
-    db.flush() # IDを確定させる
 
-    # 2. 画像（RecipeImage）とその中のアイテム（Item）の保存
+# --- 4. エンドポイント: 認証・画像操作 ---
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """ユーザー名とPWを照合し、成功ならトークンを返す（ログイン処理）"""
+    user = db.query(models.User).filter(models.User.username == form_data.username).first()
+    if not user or not pwd_context.verify(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    
+    access_token = create_access_token(data={"sub": user.username})
+    return {"access_token": access_token, "token_type": "bearer", "username": user.username}
+
+@app.post("/upload/")
+async def upload_image(file: UploadFile = File(...)):
+    """
+    画像をアップロードし、サーバーに保存する。
+    リサイズ（高品質なLANCZOS法）と形式の統一（JPEG）を行い、軽量化する。
+    """
+    file_name = f"{uuid.uuid4()}.jpg" # ファイルが重複しないようUUIDを使用
+    file_path = os.path.join(UPLOAD_DIR, file_name)
+
+    # 1. メモリに読み込む
+    content = await file.read()
+    img = Image.open(io.BytesIO(content))
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+
+    # 2. 最大サイズを1200pxに制限
+    max_size = 1200
+    if max(img.width, img.height) > max_size:
+        ratio = max_size / max(img.width, img.height)
+        img = img.resize((int(img.width * ratio), int(img.height * ratio)), Image.Resampling.LANCZOS)
+
+    # 3. 圧縮（quality=85）して保存
+    img.save(file_path, "JPEG", quality=85, optimize=True)
+    return {"image_url": f"/static/images/{file_name}"}
+
+
+# --- 5. エンドポイント: コスメ図鑑 & メイク日記 ---
+
+@app.post("/cosmetics/", response_model=schemas.CosmeticMasterRead)
+def create_cosmetic(cosmetic: schemas.CosmeticMasterCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """
+    自分の持っているコスメを図鑑に登録する。
+    入力された色(HEX)から PCCS(トーン・色相) や RGB値 を自動計算して保存。
+    """
+    pccs = find_closest_pccs(cosmetic.color_hex)
+    rgb = hex_to_rgb(cosmetic.color_hex)
+    new_cosmetic = models.CosmeticMaster(**cosmetic.model_dump(), 
+                                        pccs_tone=pccs["tone"], pccs_hue=pccs["hue"],
+                                        r=rgb[0], g=rgb[1], b=rgb[2])
+    db.add(new_cosmetic)
+    db.commit(); db.refresh(new_cosmetic)
+    return new_cosmetic
+
+@app.get("/gallery/", response_model=List[schemas.RecipeRead])
+def get_sample_gallery(db: Session = Depends(get_db)):
+    """誰でも閲覧可: 見本用として master アカウントの投稿のみを抽出して返す"""
+    master = db.query(models.User).filter(models.User.username == "master").first()
+    if not master: return []
+    return db.query(models.Recipe).filter(models.Recipe.author_id == master.id).order_by(models.Recipe.date.desc()).all()
+
+@app.post("/recipes/", response_model=schemas.RecipeRead)
+def create_recipe(recipe: schemas.RecipeCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """
+    メイク日記（Recipe）を作成する。
+    画像が「メイクマップ」の場合は、ベース・アイ・リップ等のデフォルトピンを自動生成。
+    ピンに紐付くコスメを、その場で新規登録することも可能。
+    """
+    # 1. 日記の基本情報を保存
+    new_recipe = models.Recipe(
+        title=recipe.title, description=recipe.description, scene_tag=recipe.scene_tag,
+        date=recipe.date if recipe.date else datetime.date.today(), author_id=current_user.id
+    )
+    db.add(new_recipe); db.flush() # IDを確定させる
+
+    # 2. 画像とそこに打たれたピン情報を保存
     if recipe.images:
         for img_data in recipe.images:
-            new_image = models.RecipeImage(
-                recipe_id=new_recipe.id,
-                image_path=img_data.image_path,
-                is_thumbnail=img_data.is_thumbnail,
-                is_make_map=img_data.is_make_map
-            )
-            db.add(new_image)
-            db.flush()
+            new_image = models.RecipeImage(recipe_id=new_recipe.id, image_path=img_data.image_path,
+                                           is_thumbnail=img_data.is_thumbnail, is_make_map=img_data.is_make_map)
+            db.add(new_image); db.flush()
 
-            # デフォルトピンの生成ロジック
-            # 「メイクマップ（is_make_map=True）」なら、初期状態で部位に応じたピンを作る
+            # 自動初期ピン（デフォルトピン）の生成
             if img_data.is_make_map:
                 for label in DEFAULT_PIN_LABELS:
-                    default_item = models.Item(
-                        image_id=new_image.id,
-                        pin_label=label,
-                        is_default_pin=True,
-                        # 初期座標はフロントで調整するが、一旦NULLまたは(0,0)等
-                        x_position=0.0,
-                        y_position=0.0
-                    )
-                    db.add(default_item)
+                    db.add(models.Item(image_id=new_image.id, pin_label=label, is_default_pin=True, x_position=0.0, y_position=0.0))
 
-            # 送信された既存のアイテム（ピン）を保存
+            # ユーザーが配置した各アイテム（ピン）の保存
             for item_data in img_data.items:
                 master_id = item_data.cosmetic_master_id
                 
-                # アイテム作成時に一緒にコスメを新規登録する場合
+                # 図鑑にないコスメを直接入力した場合、このタイミングで図鑑(CosmeticMaster)にも登録
                 if not master_id and item_data.color_hex:
-                    pccs = find_closest_pccs(item_data.color_hex)
-                    rgb = hex_to_rgb(item_data.color_hex)
-                    new_master = models.CosmeticMaster(
-                        category=item_data.category or "Other",
-                        name=item_data.name or "New Cosmetic",
-                        brand=item_data.brand or "Unknown",
-                        texture=item_data.texture or "None",
-                        color_hex=item_data.color_hex,
-                        r=rgb[0], g=rgb[1], b=rgb[2],
-                        pccs_tone=pccs["tone"],
-                        pccs_hue=pccs["hue"],
-                        transparency=item_data.transparency or 100,
-                        image_url=item_data.image_url
+                    pccs = find_closest_pccs(item_data.color_hex); rgb = hex_to_rgb(item_data.color_hex)
+                    new_m = models.CosmeticMaster(
+                        category=item_data.category or "Other", name=item_data.name or "New", brand=item_data.brand or "-",
+                        texture=item_data.texture or "-", color_hex=item_data.color_hex, r=rgb[0], g=rgb[1], b=rgb[2],
+                        pccs_tone=pccs["tone"], pccs_hue=pccs["hue"], transparency=item_data.transparency or 100, image_url=item_data.image_url
                     )
-                    db.add(new_master)
-                    db.flush()
-                    master_id = new_master.id
-
-                # アイテム（ピン）を作成または更新
-                # 注意: is_default_pinで既に作成されている場合は上書きにする等の制御が必要だが、
-                # ここでは新規追加として扱う
-                new_item = models.Item(
-                    cosmetic_master_id=master_id,
-                    image_id=new_image.id,
-                    x_position=item_data.x_position,
-                    y_position=item_data.y_position,
-                    pin_memo=item_data.pin_memo,
-                    is_default_pin=item_data.is_default_pin,
-                    pin_label=item_data.pin_label
-                )
-                db.add(new_item)
+                    db.add(new_m); db.flush(); master_id = new_m.id
+                
+                # アイテム（ピン）本体の保存
+                db.add(models.Item(cosmetic_master_id=master_id, image_id=new_image.id, **item_data.model_dump(exclude={"cosmetic_master_id", "category", "name", "brand", "texture", "color_hex", "transparency", "image_url"})))
     
-    db.commit()
-    db.refresh(new_recipe)
+    db.commit(); db.refresh(new_recipe)
     return new_recipe
 
-@app.get("/recipes/", response_model=list[schemas.RecipeRead]) # response_modelを指定
-def get_recipes(
-    skip: int = 0,      # 何件飛ばすか
-    limit: int = 20,    # 一度に何件取るか
-    db: Session = Depends(get_db)
-):
-    return db.query(models.Recipe).order_by(models.Recipe.date.desc()).offset(skip).limit(limit).all()
+@app.get("/my-recipes/", response_model=List[schemas.RecipeRead])
+def read_my_recipes(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    """ログイン中の自分の投稿だけを表示"""
+    return db.query(models.Recipe).filter(models.Recipe.author_id == current_user.id).order_by(models.Recipe.date.desc()).all()
 
 @app.get("/recipes/index")
 def get_recipe_index(db: Session = Depends(get_db)):
-    # 存在する「年-月」の一覧と、その月の件数を取得する
-    # 例: [{"month": "2026-02", "count": 10}, {"month": "2026-01", "count": 15}]
-    index_data = db.query(
-        func.strftime('%Y-%m', models.Recipe.date).label('month'),
-        func.count(models.Recipe.id).label('count')
-    ).group_by('month').order_by(models.Recipe.date.desc()).all()
-    
-    return index_data
-
-# 1. main.pyがある場所（backendフォルダ）を基準にする
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# 2. 保存先フォルダを絶対パスで指定
-UPLOAD_DIR = os.path.join(BASE_DIR, "static", "images")
-
-# 保存先フォルダがなければ作成する（エラー防止）
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-# 3. 静的ファイルの設定
-# directory部分を絶対パスにすることで、どこから起動しても安定します
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-
-
-# 自分の投稿のみを閲覧する
-@app.get("/my-recipes/", response_model=List[schemas.RecipeRead])
-def read_my_recipes(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user) # ログイン中の「私」を特定
-):
-    # 自分のIDに一致するレシピだけを、日付が新しい順に取得
-    return db.query(models.Recipe)\
-        .filter(models.Recipe.author_id == current_user.id)\
-        .order_by(models.Recipe.date.desc())\
-        .all()
+    """カレンダー・アーカイブ表示用に、年月別の投稿数を集計"""
+    return db.query(func.strftime('%Y-%m', models.Recipe.date).label('month'), func.count(models.Recipe.id).label('count')).group_by('month').order_by(models.Recipe.date.desc()).all()
