@@ -1,32 +1,61 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Calendar, PlusCircle, BookOpen, User } from 'lucide-react';
+import CosmeRegister from './components/post/CosmeRegister';
 
-// 仮のコンポーネント（後で本物に入れ替えます）
-const History = () => <div><h2>履歴一覧（作成中）</h2></div>;
-const CosmeRegister = () => <div><h2>コスメ登録（作成中：ここにPCCS機能を入れます）</h2></div>;
-const PostNew = () => <div><h2>新規日記作成（作成中）</h2></div>;
+// --- 仮のコンポーネント（今後実装予定） ---
+const History = () => (
+  <div className="p-6">
+    <h2 className="text-2xl font-bold mb-4">履歴一覧</h2>
+    <p className="text-slate-500">（作成中のため、コスメ登録メニューをご覧ください）</p>
+  </div>
+);
+
+const PostNew = () => (
+  <div className="p-6">
+    <h2 className="text-2xl font-bold mb-4">新規日記作成</h2>
+    <p className="text-slate-500">（作成中のため、コスメ登録メニューをご覧ください）</p>
+  </div>
+);
+
+// --- ナビゲーションバー ---
+const BottomNav = () => {
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname === path;
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-3 px-6 z-50">
+      <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-pink-500' : 'text-slate-400'}`}>
+        <Calendar size={24} />
+        <span className="text-[10px] font-bold">履歴</span>
+      </Link>
+      <Link to="/cosme" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/cosme') ? 'text-pink-500' : 'text-slate-400'}`}>
+        <PlusCircle size={24} />
+        <span className="text-[10px] font-bold">コスメ登録</span>
+      </Link>
+      <Link to="/post" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/post') ? 'text-pink-500' : 'text-slate-400'}`}>
+        <BookOpen size={24} />
+        <span className="text-[10px] font-bold">日記作成</span>
+      </Link>
+    </nav>
+  );
+};
 
 function App() {
   return (
     <Router>
-      <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-        <h1>Make Labo</h1>
-        
-        {/* 簡易ナビゲーション */}
-        <nav style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
-          <Link to="/">履歴</Link>
-          <Link to="/cosme">コスメ登録</Link>
-          <Link to="/post">日記作成</Link>
-        </nav>
+      <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 overflow-x-hidden">
+        {/* メインコンテンツ */}
+        <main className="max-w-md mx-auto relative min-h-screen bg-white shadow-xl">
+          <Routes>
+            <Route path="/" element={<History />} />
+            <Route path="/cosme" element={<CosmeRegister />} />
+            <Route path="/post" element={<PostNew />} />
+          </Routes>
+        </main>
 
-        <hr />
-
-        {/* 画面の切り替え設定 */}
-        <Routes>
-          <Route path="/" element={<History />} />
-          <Route path="/cosme" element={<CosmeRegister />} />
-          <Route path="/post" element={<PostNew />} />
-        </Routes>
+        {/* 下部ナビゲーション */}
+        <BottomNav />
       </div>
     </Router>
   );

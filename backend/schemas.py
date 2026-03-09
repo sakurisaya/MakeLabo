@@ -27,6 +27,7 @@ class CosmeticMasterBase(BaseModel):
     name: str
     brand: str
     texture: str
+    color_number: Optional[str] = None
     color_hex: str
     transparency: int
     image_url: Optional[str] = None
@@ -59,6 +60,7 @@ class ItemCreate(ItemBase):
     name: Optional[str] = None
     brand: Optional[str] = None
     texture: Optional[str] = None
+    color_number: Optional[str] = None
     color_hex: Optional[str] = None
     transparency: Optional[int] = 100
     image_url: Optional[str] = None
