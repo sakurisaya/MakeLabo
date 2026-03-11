@@ -27,15 +27,15 @@ const BottomNav = () => {
     <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-3 px-6 z-50">
       <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-pink-500' : 'text-slate-400'}`}>
         <Calendar size={24} />
-        <span className="text-[10px] font-bold">履歴</span>
+        <span className="text-[10px] font-bold">gallery</span>
       </Link>
       <Link to="/cosme" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/cosme') ? 'text-pink-500' : 'text-slate-400'}`}>
         <PlusCircle size={24} />
-        <span className="text-[10px] font-bold">コスメ登録</span>
+        <span className="text-[10px] font-bold">item</span>
       </Link>
       <Link to="/post" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/post') ? 'text-pink-500' : 'text-slate-400'}`}>
         <BookOpen size={24} />
-        <span className="text-[10px] font-bold">日記作成</span>
+        <span className="text-[10px] font-bold">recipe</span>
       </Link>
     </nav>
   );

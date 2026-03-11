@@ -1,25 +1,28 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, Save, ChevronLeft, Droplet, Plus, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-// --- 型定義 ---
+// --- 1. 型定義 (Types) ---
+// TypeScriptでは、データの「形」をあらかじめ決めておくことでミスを防ぎます。
 interface PCCSResult {
-    tone: string;
-    hue: number;
+    tone: string; // トーン (例: Vivid, Pale)
+    hue: number;  // 色相 (1〜24)
 }
 
 interface CosmeticColor {
     id: string;
-    hex: string;
-    transparency: number;
-    colorNumber?: string;
-    pccs?: PCCSResult;
+    hex: string;           // HEXカラーコード (#ffffff等)
+    transparency: number;  // 透明度 (0〜100)
+    colorNumber?: string;  // 色番号・色名（任意）
+    pccs?: PCCSResult;     // PCCSの解析結果
 }
 
-// --- 定数 ---
-const CATEGORIES = ["ベース", "アイシャドウ", "アイライナー", "アイブロウ", "チーク", "リップ", "ハイライト", "シェービング"];
-const TEXTURES = ["ツヤ", "マット", "ラメ", "パール", "サテン", "グリッター", "メタリック", "シアー"];
+// --- 2. 定数 (Constants) ---
+// アプリ内で使い回す固定のデータを定義します。
+const CATEGORIES = ["ベース", "アイシャドウ", "アイライナー", "アイブロウ", "チーク", "リップ", "コントゥアリング"];
 
-// PCCSトーン別24色相のHEXマップ (Backendのconstants.pyから移植)
+// PCCSトーン別24色相のHEXマップ
+// これを元に、入力された色に一番近いPCCSを算出します。
 const PCCS_COLOR_MAP: Record<string, string[]> = {
     "V": ["#D40045", "#EE0026", "#FD1A1C", "#FE4118", "#FF590B", "#FF7F00", "#FFCC00", "#FFE600", "#CCE700", "#99CF15", "#66B82B", "#33A23D", "#008F62", "#008678", "#007A87", "#055D87", "#093F86", "#0F218B", "#1D1A88", "#281285", "#340C81", "#56007D", "#770071", "#AF0065"],
     "b": ["#ED3B6B", "#FA344D", "#FC3633", "#FC4E33", "#FF6E2B", "#FF9913", "#FFCB1F", "#FFF231", "#CDE52F", "#99D02C", "#55A73B", "#32A65D", "#2DA380", "#1AA28E", "#1FB3B3", "#1C86AE", "#2B78B0", "#396BB0", "#5468AD", "#6A64AE", "#8561AB", "#A459AB", "#C75BB1", "#DF4C93"],
@@ -35,16 +38,30 @@ const PCCS_COLOR_MAP: Record<string, string[]> = {
     "dkg": ["#3C2D30", "#3A2B2E", "#3B2B2C", "#3A2C2B", "#40322F", "#463B35", "#453B31", "#47402C", "#42412F", "#3E3F31", "#2C382A", "#24332C", "#23342E", "#253532", "#253535", "#283639", "#232C33", "#212832", "#242331", "#282530", "#2A2730", "#2D2A31", "#362C34", "#392D31"]
 };
 
-// カテゴリ別候補色
+// カテゴリ別候補色：リップには赤系、アイブロウには茶系など
 const CATEGORY_PALETTES: Record<string, string[]> = {
-    "リップ": ["#D40045", "#EE0026", "#B01040", "#ED3B6B", "#FF4500", "#DC143C", "#FF69B4", "#C71585"],
-    "チーク": ["#FBB4C4", "#FFB6C1", "#FA8072", "#E9967A", "#FF7F50", "#DB7093", "#FFDAB9"],
-    "アイシャドウ": ["#4B3621", "#6F4E37", "#8B4513", "#D2B48C", "#FFF8DC", "#BC8F8F", "#E9967A", "#FFD700", "#C0C0C0", "#BDB76B"],
-    "ベース": ["#F5F5DC", "#FFE4C4", "#FFDAB9", "#F4A460", "#D2B48C", "#FFF5EE", "#FAF0E6"],
-    "アイブロウ": ["#2F1B10", "#3B2712", "#4B3621", "#6F4E37", "#A67B5B", "#000000", "#555555"],
+    "リップ": ["#D40045", "#EE0026", "#B01040", "#ED3B6B", "#FF4500", "#6c2937ff", "#FF69B4", "#C71585"],
+    "チーク": ["#fbb4b4ff", "#FFB6C1", "#FA8072", "#E9967A", "#FF7F50", "#DB7093", "#882c2cff"],
+    "アイシャドウ": ["#795948ff", "#734b58ff", "#a33f3aff", "#D40045", "#FF7F00", "#FFCC00", "#99CF15", "#33A23D", "#008678", "#055D87", "#0F218B", "#56007D", "#ED3B6B", "#CDE52F", "#1FB3B3", "#8561AB"],
+    "ベース": ["#f6ebc3ff", "#ffddc4ff", "#f3c69eff", "#D2B48C", "#ffd2e3ff", "#ffffc2ff", "#efffe5ff", "#d1f2ffff", "#dad8ffff"],
+    "アイブロウ": ["#2F1B10", "#3B2712", "#2c3035ff", "#6F4E37", "#A67B5B"],
+    "アイライナー": ["#000000", "#492f21ff", "#6d4a4aff"],
+    "コントゥアリング": ["#fffae9ff", "#fff5edff", "#feeeffff", "#c7a981ff", "#b1a698ff", "#876f4fff", "#8e9083ff"],
+};
+
+// カテゴリ別質感候補：ツヤ・マットなど順番を揃えています
+const CATEGORY_TEXTURES: Record<string, string[]> = {
+    "リップ": ["ツヤ", "マット", "ラメ", "シアー", "ベルベット", "サテン"],
+    "アイシャドウ": ["ツヤ", "マット", "ラメ", "パール", "グリッター", "サテン", "メタリック"],
+    "チーク": ["ツヤ", "マット", "パール", "シアー"],
+    "ベース": ["ツヤ", "マット", "セミマット", "シアー"],
+    "コントゥアリング": ["ツヤ", "マット", "ラメ", "パール"],
+    "アイライナー": ["ツヤ", "マット", "ラメ", "パール"],
+    "アイブロウ": ["パウダー", "ペンシル", "マスカラ"],
 };
 
 const DEFAULT_PALETTE = ["#D40045", "#EE0026", "#FF7F00", "#FFCC00", "#99CF15", "#33A23D", "#008678", "#055D87", "#0F218B", "#56007D"];
+const DEFAULT_TEXTURES = ["ツヤ", "マット", "シアー"];
 
 const TONE_NAMES: Record<string, string> = {
     "V": "ビビット", "b": "ブライト", "s": "ストロング", "dp": "ディープ",
@@ -52,9 +69,17 @@ const TONE_NAMES: Record<string, string> = {
     "p": "ペール", "ltg": "ライトグレイッシュ", "g": "グレイッシュ", "dkg": "ダークグレイッシュ"
 };
 
-// --- ヘルパー関数: PCCS計算 ---
+// 有名ブランドの初期リスト
+const INITIAL_BRANDS = [
+    "SHISEIDO", "KOSÉ", "Kanebo", "CEZANNE", "CANMAKE", "KATE", "ADDICTION",
+    "ROM&ND", "hince", "fwee", "Laka", "CLIO", "CHANEL", "DIOR", "YSL"
+];
+
+// --- 3. ヘルパー関数 (Helper Functions) ---
+// 計算や変換など、特定の小さな仕事をする関数です。
 const hexToRgb = (hex: string) => {
-    const h = hex.replace('#', '');
+    // #RRGGBBAA の形式（8桁）で来る場合があるため、最初の6桁（#を含めて7文字）だけを使います
+    const h = hex.replace('#', '').substring(0, 6);
     const r = parseInt(h.substring(0, 2), 16);
     const g = parseInt(h.substring(2, 4), 16);
     const b = parseInt(h.substring(4, 6), 16);
@@ -83,30 +108,50 @@ const findClosestPccs = (targetHex: string) => {
     return closestPccs;
 };
 
+// --- 4. メインコンポーネント (Main Component) ---
 const CosmeRegister: React.FC = () => {
-    const [step, setStep] = useState(1);
+    const navigate = useNavigate();
+    // 状態管理 (State): 画面上で変化するデータ（ブランド名や選んだ色など）を保持します。
+    const [step, setStep] = useState(1); // 現在のステップ (1:カテゴリ, 2:基本情報, 3:色登録)
     const [category, setCategory] = useState("");
     const [brand, setBrand] = useState("");
     const [name, setName] = useState("");
     const [texture, setTexture] = useState("");
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [colors, setColors] = useState<CosmeticColor[]>([]);
-    const [activeColorId, setActiveColorId] = useState<string | null>(null);
+    const [memo, setMemo] = useState("");
 
+    // ブランドリストの状態（localStorageから読み込み、なければ初期リストを使用）
+    const [brands, setBrands] = useState<string[]>(() => {
+        const saved = localStorage.getItem('ml_brands');
+        return saved ? JSON.parse(saved) : INITIAL_BRANDS;
+    });
+
+    // 画像プレビュー用
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null); // DOM要素（inputファイル等）に直接アクセスするための仕組み
+
+    const [colors, setColors] = useState<CosmeticColor[]>([]); // 登録された色のリスト
+    const [activeColorId, setActiveColorId] = useState<string | null>(null); // 現在編集中の色のID
+
+    // --- ロジック関数 ---
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const url = URL.createObjectURL(file);
+            const url = URL.createObjectURL(file); // ブラウザで表示可能な一時的なURLを作成
             setImagePreview(url);
         }
     };
 
+    const removeColor = (id: string) => {
+        setColors(colors.filter(c => c.id !== id));
+        if (activeColorId === id) setActiveColorId(null);
+    };
+
     const addColor = (hex: string) => {
-        const newId = Math.random().toString(36).substr(2, 9);
-        const pccs = findClosestPccs(hex);
+        const sanitizedHex = hex.substring(0, 7); // 8桁以上のHEXが来ても7桁に正規化
+        const newId = Math.random().toString(36).substr(2, 9); // ランダムなIDを生成
+        const pccs = findClosestPccs(sanitizedHex);
         const newColor: CosmeticColor = {
-            id: newId, hex: hex, transparency: 100, colorNumber: "", pccs
+            id: newId, hex: sanitizedHex, transparency: 100, colorNumber: "", pccs
         };
         setColors([...colors, newColor]);
         setActiveColorId(newId);
@@ -115,9 +160,15 @@ const CosmeRegister: React.FC = () => {
     const updateColorField = (id: string, field: keyof CosmeticColor, value: any) => {
         setColors(colors.map(c => {
             if (c.id === id) {
-                const updated = { ...c, [field]: value };
+                let updatedValue = value;
+                // HEXが8桁（#RRGGBBAA）で渡された場合、ブラウザのピッカーが対応していないため7桁に調整します
+                if (field === 'hex' && typeof value === 'string' && value.length > 7) {
+                    updatedValue = value.substring(0, 7);
+                }
+
+                const updated = { ...c, [field]: updatedValue };
                 if (field === 'hex') {
-                    updated.pccs = findClosestPccs(value as string);
+                    updated.pccs = findClosestPccs(updatedValue as string); // 色が変わったらPCCSも再計算
                 }
                 return updated;
             }
@@ -126,22 +177,47 @@ const CosmeRegister: React.FC = () => {
     };
 
     const handleSave = async () => {
-        alert(`${name} を登録しました！`);
+        // 新しいブランドであればリストに追加して保存
+        if (brand && !brands.includes(brand)) {
+            const newBrands = [...brands, brand];
+            setBrands(newBrands);
+            localStorage.setItem('ml_brands', JSON.stringify(newBrands));
+        }
+
+        // 本来はここでバックエンドのAPIを叩きます
+        const postData = {
+            category, brand, name, texture, memo,
+            colors: colors.map(c => ({
+                hex: c.hex,
+                transparency: c.transparency,
+                color_number: c.colorNumber
+            }))
+        };
+        console.log("Saving cosme:", postData);
+        alert(`${brand} ${name} を登録しました！`);
+
+        // 登録完了後はホーム画面（gallery）に戻る
+        navigate("/");
     };
 
+    // 現在のカテゴリに基づいたパレットと質感を決定
     const currentPalette = CATEGORY_PALETTES[category] || DEFAULT_PALETTE;
+    const currentTextures = CATEGORY_TEXTURES[category] || DEFAULT_TEXTURES;
 
+    // --- 5. 画面表示 (JSX) ---
     return (
         <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20 font-sans">
+            {/* ヘッダー部分 */}
             <div className="bg-white px-6 py-4 shadow-sm flex items-center justify-between sticky top-0 z-10">
                 <button onClick={() => setStep(Math.max(1, step - 1))} className="p-2 -ml-2 text-slate-400">
                     <ChevronLeft />
                 </button>
-                <h1 className="text-lg font-bold text-slate-800">コスメ図鑑に登録</h1>
+                <h1 className="text-lg font-bold text-slate-800">コスメを登録</h1>
                 <div className="w-10"></div>
             </div>
 
             <div className="p-6">
+                {/* ステップ1: カテゴリ選択 */}
                 {step === 1 && (
                     <div className="animate-in fade-in duration-500">
                         <h2 className="text-xl font-bold mb-6 text-slate-800 text-center">カテゴリを選択</h2>
@@ -150,26 +226,47 @@ const CosmeRegister: React.FC = () => {
                                 <button key={cat} onClick={() => { setCategory(cat); setStep(2); }}
                                     className={`py-6 rounded-2xl border-2 transition-all duration-300 ${category === cat ? "border-pink-400 bg-pink-50 text-pink-600 shadow-md" : "border-white bg-white text-slate-600"}`}>
                                     <span className="block text-lg font-medium">{cat}</span>
+                                    {cat === "ベース" && (
+                                        <span className="block text-[10px] opacity-60 mt-1 font-bold">ファンデーション/コンシーラー/下地</span>
+                                    )}
+                                    {cat === "コントゥアリング" && (
+                                        <span className="block text-[10px] opacity-60 mt-1 font-bold">ハイライト/シェーディング</span>
+                                    )}
                                 </button>
                             ))}
                         </div>
                     </div>
                 )}
 
+                {/* ステップ2: 基本情報（ブランド・商品名・質感） */}
                 {step === 2 && (
                     <div className="space-y-6 animate-in slide-in-from-right duration-500">
                         <label className="block">
                             <span className="text-sm font-bold text-slate-500 mb-2 block">ブランド名</span>
-                            <input type="text" value={brand} onChange={e => setBrand(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例: ROM&ND" />
+                            <input
+                                type="text"
+                                value={brand}
+                                onChange={e => setBrand(e.target.value)}
+                                list="brand-list"
+                                className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none"
+                                placeholder="例: SHISEIDO"
+                            />
+                            <datalist id="brand-list">
+                                {brands.map(b => <option key={b} value={b} />)}
+                            </datalist>
                         </label>
                         <label className="block">
                             <span className="text-sm font-bold text-slate-500 mb-2 block">商品名</span>
-                            <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例: ジューシーラスティングティント" />
+                            <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例: エッセンス スキングロウ ファンデーション" />
+                        </label>
+                        <label className="block">
+                            <span className="text-sm font-bold text-slate-500 mb-2 block">メモ</span>
+                            <textarea value={memo} onChange={e => setMemo(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none min-h-[100px]" placeholder="例: 濡れたようなツヤ、美容処方、など" />
                         </label>
                         <div>
                             <span className="text-sm font-bold text-slate-500 mb-3 block">質感</span>
                             <div className="flex flex-wrap gap-2">
-                                {TEXTURES.map(t => (
+                                {currentTextures.map(t => (
                                     <button key={t} onClick={() => setTexture(t)}
                                         className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${texture === t ? "bg-slate-800 text-white shadow-lg" : "bg-white text-slate-500"}`}>{t}</button>
                                 ))}
@@ -181,8 +278,10 @@ const CosmeRegister: React.FC = () => {
                     </div>
                 )}
 
+                {/* ステップ3: 色と画像の詳細登録 */}
                 {step === 3 && (
                     <div className="space-y-8 animate-in slide-in-from-right duration-500">
+                        {/* 画像アップロード */}
                         <div onClick={() => fileInputRef.current?.click()} className="relative aspect-video bg-white rounded-3xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shadow-inner group transition-all hover:border-pink-300 cursor-pointer">
                             {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="cosme" /> : (
                                 <div className="text-center group-hover:scale-110 transition-transform">
@@ -193,12 +292,14 @@ const CosmeRegister: React.FC = () => {
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
                         </div>
 
+                        {/* カラーセクション */}
                         <div>
                             <div className="flex justify-between items-end mb-4">
                                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Droplet className="text-pink-400" />色の選択</h3>
                                 <span className="text-xs font-bold text-slate-400">{colors.length}色登録済み</span>
                             </div>
 
+                            {/* アイコン型のカラーリスト */}
                             <div className="flex gap-3 mb-6 overflow-x-auto pb-4 scrollbar-hide">
                                 {colors.map(c => (
                                     <div key={c.id} className={`relative flex-shrink-0 cursor-pointer transition-all ${activeColorId === c.id ? 'scale-110' : ''}`} onClick={() => setActiveColorId(c.id)}>
@@ -207,9 +308,10 @@ const CosmeRegister: React.FC = () => {
                                         {c.pccs && <div className="absolute -bottom-1 left-0 right-0 text-[10px] font-bold bg-white/90 text-slate-700 px-1 rounded text-center shadow-sm">{c.pccs.tone}{c.pccs.hue}</div>}
                                     </div>
                                 ))}
-                                <button onClick={() => addColor("#FFB6C1")} className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-300 hover:bg-slate-200 transition-colors"><Plus /></button>
+                                <button onClick={() => addColor(currentPalette[0])} className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-300 hover:bg-slate-200 transition-colors"><Plus /></button>
                             </div>
 
+                            {/* 詳細編集エリア（色を選んだ時だけ表示） */}
                             {activeColorId ? (
                                 <div className="bg-white p-6 rounded-3xl shadow-xl space-y-6 animate-in slide-in-from-bottom duration-500">
                                     <div>
@@ -218,7 +320,7 @@ const CosmeRegister: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <p className="text-xs font-bold text-slate-400 mb-3 text-center uppercase tracking-wider">候補から選ぶ ({category})</p>
+                                        <p className="text-xs font-bold text-slate-400 mb-3 text-center">候補から選ぶ ({category})</p>
                                         <div className="grid grid-cols-6 gap-2 mb-6">
                                             {currentPalette.map(hex => (
                                                 <button key={hex} onClick={() => updateColorField(activeColorId, 'hex', hex)} className="aspect-square rounded-lg shadow-sm border-2 border-white transform transition hover:scale-110 active:scale-95" style={{ backgroundColor: hex }} />
@@ -228,10 +330,12 @@ const CosmeRegister: React.FC = () => {
 
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-4">
-                                            <span className="text-xs font-bold text-slate-400 w-12">詳細色</span>
+                                            <span className="text-xs font-bold text-slate-400 w-12">タップで調整</span>
                                             <div className="relative group flex-1">
+                                                {/* ここで透明度を反映したプレビューを表示 */}
                                                 <div className="absolute inset-0 rounded-lg shadow-inner pointer-events-none" style={{ backgroundColor: colors.find(c => c.id === activeColorId)?.hex, opacity: colors.find(c => c.id === activeColorId)?.transparency! / 100 }} />
-                                                <input type="color" value={colors.find(c => c.id === activeColorId)?.hex} onChange={e => updateColorField(activeColorId, 'hex', e.target.value)} className="h-10 w-full rounded cursor-pointer border-none bg-transparent opacity-0" />
+                                                {/* valueには必ず7桁のHEX（#RRGGBB）を渡す必要があります（8桁だと黒になるため） */}
+                                                <input type="color" value={colors.find(c => c.id === activeColorId)?.hex.substring(0, 7)} onChange={e => updateColorField(activeColorId, 'hex', e.target.value)} className="h-10 w-full rounded cursor-pointer border-none bg-transparent opacity-0" />
                                                 <div className="h-10 w-full rounded border-2 border-slate-100 flex items-center justify-center">
                                                     <span className="text-[10px] font-mono text-slate-400 select-none">PICK COLOR</span>
                                                 </div>
@@ -243,6 +347,7 @@ const CosmeRegister: React.FC = () => {
                                         </div>
                                     </div>
 
+                                    {/* PCCS解析結果のカード */}
                                     {colors.find(c => c.id === activeColorId)?.pccs && (
                                         <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-2xl p-4 text-center border border-pink-100">
                                             <span className="text-[10px] font-black text-pink-400 uppercase tracking-[0.2em] block mb-1">PCCS Analysis</span>
@@ -259,12 +364,13 @@ const CosmeRegister: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button onClick={handleSave} disabled={colors.length === 0} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold shadow-xl flex items-center justify-center gap-2 hover:bg-slate-700 transition-all active:scale-95 disabled:opacity-50"><Save size={20} />図鑑に保存する</button>
+                            <button onClick={handleSave} disabled={colors.length === 0} className="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold shadow-xl flex items-center justify-center gap-2 hover:bg-slate-700 transition-all active:scale-95 disabled:opacity-50"><Save size={20} />コスメを保存</button>
                         </div>
                     </div>
                 )}
             </div>
 
+            {/* 下の進捗ドット */}
             <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
                 {[1, 2, 3].map(i => (<div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${step === i ? 'w-8 bg-pink-400' : 'w-2 bg-slate-200'}`} />))}
             </div>

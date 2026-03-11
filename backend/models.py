@@ -23,6 +23,7 @@ class CosmeticMaster(Base):
     brand = Column(String)
     texture = Column(String)
     color_number = Column(String, nullable=True) # 色番号・色名
+    memo = Column(String, nullable=True) # 任意のメモ欄
     image_url = Column(String, nullable=True) # コスメ自体の写真
 
     # 色彩データ（PCCS）

@@ -229,14 +229,15 @@ def create_recipe(recipe: schemas.RecipeCreate, db: Session = Depends(get_db), c
                     pccs = find_closest_pccs(item_data.color_hex); rgb = hex_to_rgb(item_data.color_hex)
                     new_m = models.CosmeticMaster(
                         category=item_data.category or "Other", name=item_data.name or "New", brand=item_data.brand or "-",
-                        texture=item_data.texture or "-", color_number=item_data.color_number, color_hex=item_data.color_hex, 
+                        texture=item_data.texture or "-", color_number=item_data.color_number, memo=item_data.memo,
+                        color_hex=item_data.color_hex, 
                         r=rgb[0], g=rgb[1], b=rgb[2],
                         pccs_tone=pccs["tone"], pccs_hue=pccs["hue"], transparency=item_data.transparency or 100, image_url=item_data.image_url
                     )
                     db.add(new_m); db.flush(); master_id = new_m.id
                 
                 # アイテム（ピン）本体の保存
-                db.add(models.Item(cosmetic_master_id=master_id, image_id=new_image.id, **item_data.model_dump(exclude={"cosmetic_master_id", "category", "name", "brand", "texture", "color_hex", "transparency", "image_url"})))
+                db.add(models.Item(cosmetic_master_id=master_id, image_id=new_image.id, **item_data.model_dump(exclude={"cosmetic_master_id", "category", "name", "brand", "texture", "color_number", "memo", "color_hex", "transparency", "image_url"})))
     
     db.commit(); db.refresh(new_recipe)
     return new_recipe
