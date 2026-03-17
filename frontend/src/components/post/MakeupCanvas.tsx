@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import type { PinItem } from '../../pages/PostPage';
+import type { PinItem } from '../../types/recipe';
 
 interface Props {
     imageUrl: string;
@@ -27,16 +27,25 @@ export const MakeupCanvas = ({ imageUrl, pins, onAddPin, onSelectPin, onMovePin,
         onAddPin(x, y);
     };
 
+    const [hasMoved, setHasMoved] = useState(false);
+    const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
     const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>, id: string) => {
         e.stopPropagation();
         e.currentTarget.setPointerCapture(e.pointerId);
         setDraggingId(id);
-        onSelectPin(id);
+        setHasMoved(false);
+        setStartPos({ x: e.clientX, y: e.clientY });
     };
 
     const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
         if (!draggingId || draggingId !== e.currentTarget.id) return;
         if (!containerRef.current) return;
+
+        // 微小な移動はドラッグとみなさない（誤操作防止）
+        const dist = Math.sqrt(Math.pow(e.clientX - startPos.x, 2) + Math.pow(e.clientY - startPos.y, 2));
+        if (dist > 3) setHasMoved(true);
+
         const rect = containerRef.current.getBoundingClientRect();
         let x = ((e.clientX - rect.left) / rect.width) * 100;
         let y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -48,6 +57,10 @@ export const MakeupCanvas = ({ imageUrl, pins, onAddPin, onSelectPin, onMovePin,
     const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
         if (draggingId === e.currentTarget.id) {
             e.currentTarget.releasePointerCapture(e.pointerId);
+            // 動いていない場合のみ詳細を開く
+            if (!hasMoved) {
+                onSelectPin(draggingId);
+            }
             setDraggingId(null);
         }
     };
@@ -78,11 +91,12 @@ export const MakeupCanvas = ({ imageUrl, pins, onAddPin, onSelectPin, onMovePin,
                         onPointerMove={handlePointerMove}
                         onPointerUp={handlePointerUp}
                         onPointerCancel={handlePointerUp}
+                        onClick={(e) => e.stopPropagation()}
                         className={`
                             w-4 h-4 rounded-full border-2 shadow-lg transition-all cursor-move
                             ${selectedPinId === pin.id
                                 ? 'bg-pink-500 border-white scale-125 z-10'
-                                : pin.isDefault && !pin.items?.some(i => i.brand || i.name || i.memo)
+                                : pin.isDefault && !pin.items?.some((i: any) => i.brand || i.name || i.masterMemo || i.usageMemo)
                                     ? 'bg-gray-400 border-white hover:bg-slate-400'
                                     : 'bg-white/90 border-pink-500 hover:bg-white border-2'}
                             ${pin.isHidden ? 'opacity-40 border-dashed' : ''}

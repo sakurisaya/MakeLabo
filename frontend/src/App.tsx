@@ -1,22 +1,11 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Calendar, PlusCircle, BookOpen, User } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Calendar, PlusCircle, BookOpen } from 'lucide-react';
+import { History } from './pages/History';
+import { PostPage } from './pages/PostPage';
 import CosmeRegister from './components/post/CosmeRegister';
-
-// --- 仮のコンポーネント（今後実装予定） ---
-const History = () => (
-  <div className="p-6">
-    <h2 className="text-2xl font-bold mb-4">履歴一覧</h2>
-    <p className="text-slate-500">（作成中のため、コスメ登録メニューをご覧ください）</p>
-  </div>
-);
-
-const PostNew = () => (
-  <div className="p-6">
-    <h2 className="text-2xl font-bold mb-4">新規日記作成</h2>
-    <p className="text-slate-500">（作成中のため、コスメ登録メニューをご覧ください）</p>
-  </div>
-);
+import { RecipeDetail } from './pages/RecipeDetail';
+import { CosmeList } from './pages/CosmeList';
+import { CosmeDetail } from './pages/CosmeDetail';
 
 // --- ナビゲーションバー ---
 const BottomNav = () => {
@@ -44,21 +33,32 @@ const BottomNav = () => {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 overflow-x-hidden">
-        {/* メインコンテンツ */}
-        <main className="max-w-md mx-auto relative min-h-screen bg-white shadow-xl">
-          <Routes>
-            <Route path="/" element={<History />} />
-            <Route path="/cosme" element={<CosmeRegister />} />
-            <Route path="/post" element={<PostNew />} />
-          </Routes>
-        </main>
-
-        {/* 下部ナビゲーション */}
-        <BottomNav />
-      </div>
+      <AppContent />
     </Router>
   );
 }
+
+const AppContent = () => {
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 overflow-x-hidden">
+      {/* メインコンテンツ */}
+      <main className="max-w-md mx-auto relative min-h-screen bg-white shadow-xl">
+        <Routes>
+          <Route path="/" element={<History onNavigateToPost={(data) => navigate("/post", { state: { initialData: data } })} />} />
+          <Route path="/recipe/:id" element={<RecipeDetail />} />
+          <Route path="/cosme" element={<CosmeList />} />
+          <Route path="/cosme/new" element={<CosmeRegister />} />
+          <Route path="/cosme/:id" element={<CosmeDetail />} />
+          <Route path="/post" element={<PostPage onBack={() => navigate("/")} />} />
+        </Routes>
+      </main>
+
+      {/* 下部ナビゲーション */}
+      <BottomNav />
+    </div>
+  );
+};
 
 export default App;

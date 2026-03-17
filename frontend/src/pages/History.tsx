@@ -1,42 +1,71 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import type { Recipe } from '../types/recipe';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
-
-interface Recipe {
-    id: string;
-    overallData: {
-        title: string;
-        date: string;
-        rating: number;
-        weather: string;
-        tags: string[];
-    };
-    slides: {
-        image: string;
-        isThumbnail: boolean;
-    }[];
-}
+import { Copy, Trash2, Edit, Share2, MoreVertical, X } from 'lucide-react';
 
 interface Props {
     onNavigateToPost: (recipeToEdit?: Recipe) => void;
 }
 
 export const History = ({ onNavigateToPost }: Props) => {
+    const navigate = useNavigate();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [longPressedRecipe, setLongPressedRecipe] = useState<Recipe | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
+    const longPressTimer = useRef<any | null>(null);
+
+    const fetchRecipes = async () => {
+        try {
+            const res = await axios.get('/recipes/all');
+            const formatted = res.data.map((r: any) => ({
+                id: String(r.id),
+                overallData: {
+                    title: r.title,
+                    date: r.date,
+                    rating: 3,
+                    weather: 'sunny',
+                    tags: r.scene_tag ? r.scene_tag.split(',') : [],
+                    memo: r.description || ''
+                },
+                slides: r.images.map((img: any) => ({
+                    id: String(img.id),
+                    image: img.image_path,
+                    isThumbnail: img.is_thumbnail,
+                    isMakeMap: img.is_make_map,
+                    pins: img.items.map((it: any) => ({
+                        id: String(it.id),
+                        x: it.x_position,
+                        y: it.y_position,
+                        label: it.pin_label,
+                        isDefault: it.is_default_pin,
+                        items: it.cosmetic_master ? [{
+                            brand: it.cosmetic_master.brand,
+                            name: it.cosmetic_master.name,
+                            usageMemo: it.pin_memo,
+                            masterMemo: it.cosmetic_master.memo,
+                            category: it.cosmetic_master.category,
+                            texture: it.cosmetic_master.texture,
+                            colorNumber: it.cosmetic_master.color_number,
+                            hex: it.cosmetic_master.color_hex,
+                        }] : []
+                    }))
+                }))
+            }));
+            setRecipes(formatted);
+        } catch (e) {
+            console.error("Failed to fetch recipes from backend", e);
+            const savedData = localStorage.getItem('mua_recipes');
+            if (savedData) setRecipes(JSON.parse(savedData));
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const savedData = localStorage.getItem('mua_recipes');
-        if (savedData) {
-            try {
-                const parsed = JSON.parse(savedData);
-                // 日付の新しい順にソート
-                const sorted = (parsed as Recipe[]).sort((a, b) =>
-                    new Date(b.overallData?.date || 0).getTime() - new Date(a.overallData?.date || 0).getTime()
-                );
-                setRecipes(sorted);
-            } catch (e) {
-                console.error("Failed to parse recipes", e);
-            }
-        }
+        fetchRecipes();
     }, []);
 
     const getWeatherIcon = (weather: string) => {
@@ -49,6 +78,88 @@ export const History = ({ onNavigateToPost }: Props) => {
             default: return '☀️';
         }
     };
+
+    const handleTouchStart = (recipe: Recipe, e: React.TouchEvent | React.MouseEvent) => {
+        const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const y = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+
+        longPressTimer.current = setTimeout(() => {
+            setLongPressedRecipe(recipe);
+            setMenuPosition({ x, y });
+        }, 600);
+    };
+
+    const handleTouchEnd = () => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    };
+
+    const handleDelete = async (recipeId: string) => {
+        if (!window.confirm("このレシピを削除してもよろしいですか？")) return;
+        try {
+            await axios.delete(`/recipes/${recipeId}`);
+            setRecipes(recipes.filter(r => r.id !== recipeId));
+            setLongPressedRecipe(null);
+        } catch (e) {
+            alert("削除に失敗しました。");
+        }
+    };
+
+    const handleDuplicate = async (recipe: Recipe) => {
+        try {
+            const payload = {
+                title: `${recipe.overallData.title} (コピー)`,
+                description: recipe.overallData.memo,
+                scene_tag: recipe.overallData.tags.join(','),
+                date: new Date().toISOString().split('T')[0],
+                images: recipe.slides.map(s => ({
+                    image_path: s.image,
+                    is_thumbnail: s.isThumbnail,
+                    is_make_map: s.isMakeMap,
+                    items: s.pins.map(p => ({
+                        x_position: p.x,
+                        y_position: p.y,
+                        pin_memo: p.items?.[0]?.usageMemo || "",
+                        is_default_pin: p.isDefault || false,
+                        pin_label: p.label || null,
+                        name: p.items?.[0]?.name || null,
+                        brand: p.items?.[0]?.brand || null,
+                        memo: p.items?.[0]?.masterMemo || null
+                    }))
+                }))
+            };
+            await axios.post("/recipes/", payload);
+            fetchRecipes();
+            setLongPressedRecipe(null);
+            alert("レシピをコピーしました！");
+        } catch (e) {
+            alert("コピーに失敗しました。");
+        }
+    };
+
+    const handleShare = (recipe: Recipe) => {
+        if (navigator.share) {
+            navigator.share({
+                title: recipe.overallData.title,
+                text: recipe.overallData.memo,
+                url: window.location.href,
+            }).catch(console.error);
+        } else {
+            alert("提供されているブラウザでは共有機能がサポートされていません。");
+        }
+        setLongPressedRecipe(null);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-300">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mb-4"></div>
+                <p className="text-sm font-bold">データを読み込み中...</p>
+            </div>
+        );
+    }
 
     if (recipes.length === 0) {
         return (
@@ -74,7 +185,7 @@ export const History = ({ onNavigateToPost }: Props) => {
         <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h2 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
                 <span className="w-2 h-8 bg-pink-500 rounded-full"></span>
-                Makeup History
+                Makeup Recipes
             </h2>
 
             <div className="grid grid-cols-1 gap-6">
@@ -85,10 +196,16 @@ export const History = ({ onNavigateToPost }: Props) => {
                     return (
                         <div
                             key={recipe.id}
-                            onClick={() => onNavigateToPost(recipe)}
-                            className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer border border-slate-100 flex h-40 md:h-48 group"
+                            onClick={() => {
+                                if (!longPressedRecipe) navigate(`/recipe/${recipe.id}`, { state: { recipe } });
+                            }}
+                            onMouseDown={(e) => handleTouchStart(recipe, e)}
+                            onMouseUp={handleTouchEnd}
+                            onMouseLeave={handleTouchEnd}
+                            onTouchStart={(e) => handleTouchStart(recipe, e)}
+                            onTouchEnd={handleTouchEnd}
+                            className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer border border-slate-100 flex h-40 md:h-48 group relative ${longPressedRecipe?.id === recipe.id ? 'ring-4 ring-pink-500/20' : ''}`}
                         >
-                            {/* 左側: メイン画像 */}
                             <div className="w-32 md:w-40 h-full flex-shrink-0 relative overflow-hidden">
                                 <img
                                     src={displayImage}
@@ -98,7 +215,6 @@ export const History = ({ onNavigateToPost }: Props) => {
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             </div>
 
-                            {/* 右側: 情報 */}
                             <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
                                 <div>
                                     <h3 className="text-lg md:text-xl font-bold text-slate-800 line-clamp-1 group-hover:text-pink-600 transition-colors">
@@ -118,24 +234,89 @@ export const History = ({ onNavigateToPost }: Props) => {
                                     </div>
                                 </div>
 
-                                {/* 下部: タグ */}
                                 <div className="flex flex-wrap gap-2 mt-auto">
                                     {(recipe.overallData?.tags || []).slice(0, 3).map((tag, idx) => (
                                         <span key={idx} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-wider">
                                             #{tag}
                                         </span>
                                     ))}
-                                    {recipe.overallData?.tags && recipe.overallData.tags.length > 3 && (
-                                        <span className="text-[10px] font-bold text-slate-300 self-center">+{recipe.overallData.tags.length - 3}</span>
-                                    )}
                                 </div>
                             </div>
+
+                            {/* モバイル用メニューボタン */}
+                            <button
+                                className="absolute top-2 right-2 p-2 text-slate-300 hover:text-pink-500"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLongPressedRecipe(recipe);
+                                    setMenuPosition({ x: e.clientX, y: e.clientY });
+                                }}
+                            >
+                                <MoreVertical size={18} />
+                            </button>
                         </div>
                     );
                 })}
             </div>
 
-            {/* FAB: 新規作成ボタン */}
+            {/* コンテキストメニュー (長押しまたは点々ボタン) */}
+            {longPressedRecipe && menuPosition && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/10 backdrop-blur-[2px]"
+                    onClick={() => { setLongPressedRecipe(null); setMenuPosition(null); }}
+                >
+                    <div
+                        className="absolute bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] animate-in zoom-in-95 duration-100 border border-slate-100 overflow-hidden"
+                        style={{
+                            left: Math.min(window.innerWidth - 180, menuPosition.x),
+                            top: Math.min(window.innerHeight - 250, menuPosition.y)
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Recipe Actions</p>
+                        </div>
+
+                        <button
+                            onClick={() => { onNavigateToPost(longPressedRecipe); setLongPressedRecipe(null); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        >
+                            <Edit size={16} /> 編集
+                        </button>
+
+                        <button
+                            onClick={() => handleDuplicate(longPressedRecipe)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        >
+                            <Copy size={16} /> 複製 (コピー)
+                        </button>
+
+                        <button
+                            onClick={() => handleShare(longPressedRecipe)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
+                        >
+                            <Share2 size={16} /> 共有
+                        </button>
+
+                        <div className="h-[1px] bg-slate-50 my-1 mx-2"></div>
+
+                        <button
+                            onClick={() => handleDelete(longPressedRecipe.id)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                            <Trash2 size={16} /> 削除
+                        </button>
+
+                        <button
+                            onClick={() => setLongPressedRecipe(null)}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-400 hover:bg-slate-50 transition-colors"
+                        >
+                            <X size={16} /> 閉じる
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <button
                 onClick={() => onNavigateToPost()}
                 className="fixed bottom-8 right-8 w-16 h-16 bg-pink-500 text-white rounded-full shadow-2xl shadow-pink-200 flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"

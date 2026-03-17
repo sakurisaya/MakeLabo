@@ -1,6 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Camera, Save, ChevronLeft, Droplet, Plus, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { INITIAL_BRANDS, LOCAL_STORAGE_BRANDS_KEY } from '../../constants/brands';
+import { getDefaultCosmeImage } from '../../utils/imageUtils';
 
 // --- 1. 型定義 (Types) ---
 // TypeScriptでは、データの「形」をあらかじめ決めておくことでミスを防ぎます。
@@ -19,7 +22,7 @@ interface CosmeticColor {
 
 // --- 2. 定数 (Constants) ---
 // アプリ内で使い回す固定のデータを定義します。
-const CATEGORIES = ["ベース", "アイシャドウ", "アイライナー", "アイブロウ", "チーク", "リップ", "コントゥアリング"];
+const CATEGORIES = ["ベース", "アイシャドウ", "アイライナー", "マスカラ", "アイブロウ", "チーク", "リップ", "コントゥアリング", "Others"];
 
 // PCCSトーン別24色相のHEXマップ
 // これを元に、入力された色に一番近いPCCSを算出します。
@@ -46,6 +49,7 @@ const CATEGORY_PALETTES: Record<string, string[]> = {
     "ベース": ["#f6ebc3ff", "#ffddc4ff", "#f3c69eff", "#D2B48C", "#ffd2e3ff", "#ffffc2ff", "#efffe5ff", "#d1f2ffff", "#dad8ffff"],
     "アイブロウ": ["#2F1B10", "#3B2712", "#2c3035ff", "#6F4E37", "#A67B5B"],
     "アイライナー": ["#000000", "#492f21ff", "#6d4a4aff"],
+    "マスカラ": ["#000000", "#492f21ff", "#6d4a4aff"],
     "コントゥアリング": ["#fffae9ff", "#fff5edff", "#feeeffff", "#c7a981ff", "#b1a698ff", "#876f4fff", "#8e9083ff"],
 };
 
@@ -58,22 +62,15 @@ const CATEGORY_TEXTURES: Record<string, string[]> = {
     "コントゥアリング": ["ツヤ", "マット", "ラメ", "パール"],
     "アイライナー": ["ツヤ", "マット", "ラメ", "パール"],
     "アイブロウ": ["パウダー", "ペンシル", "マスカラ"],
+    "Others": ["ツヤ", "マット", "シアー"],
 };
 
 const DEFAULT_PALETTE = ["#D40045", "#EE0026", "#FF7F00", "#FFCC00", "#99CF15", "#33A23D", "#008678", "#055D87", "#0F218B", "#56007D"];
-const DEFAULT_TEXTURES = ["ツヤ", "マット", "シアー"];
 
 const TONE_NAMES: Record<string, string> = {
     "V": "ビビット", "b": "ブライト", "s": "ストロング", "dp": "ディープ",
-    "lt": "ライト", "sf": "ソフト", "d": "ダル", "dk": "ダーク",
     "p": "ペール", "ltg": "ライトグレイッシュ", "g": "グレイッシュ", "dkg": "ダークグレイッシュ"
 };
-
-// 有名ブランドの初期リスト
-const INITIAL_BRANDS = [
-    "SHISEIDO", "KOSÉ", "Kanebo", "CEZANNE", "CANMAKE", "KATE", "ADDICTION",
-    "ROM&ND", "hince", "fwee", "Laka", "CLIO", "CHANEL", "DIOR", "YSL"
-];
 
 // --- 3. ヘルパー関数 (Helper Functions) ---
 // 計算や変換など、特定の小さな仕事をする関数です。
@@ -111,26 +108,51 @@ const findClosestPccs = (targetHex: string) => {
 // --- 4. メインコンポーネント (Main Component) ---
 const CosmeRegister: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const editCosme = location.state?.editCosme || location.state?.editData; // 前の画面からの編集用データ
+    const returnPath = location.state?.returnPath;
+
     // 状態管理 (State): 画面上で変化するデータ（ブランド名や選んだ色など）を保持します。
-    const [step, setStep] = useState(1); // 現在のステップ (1:カテゴリ, 2:基本情報, 3:色登録)
-    const [category, setCategory] = useState("");
-    const [brand, setBrand] = useState("");
-    const [name, setName] = useState("");
-    const [texture, setTexture] = useState("");
-    const [memo, setMemo] = useState("");
+    const [step, setStep] = useState(editCosme ? 2 : 1); // 編集時は基本情報から
+    const [category, setCategory] = useState(editCosme?.category || "");
+    const [brand, setBrand] = useState(editCosme?.brand || "");
+    const [name, setName] = useState(editCosme?.name || "");
+    const [itemColorNumber, setItemColorNumber] = useState(editCosme?.color_number || editCosme?.colorNumber || ""); // ステップ2で入力する色番号
+    const [texture, setTexture] = useState(editCosme?.texture || "");
+    const [memo, setMemo] = useState(editCosme?.memo || editCosme?.masterMemo || "");
 
     // ブランドリストの状態（localStorageから読み込み、なければ初期リストを使用）
     const [brands, setBrands] = useState<string[]>(() => {
-        const saved = localStorage.getItem('ml_brands');
-        return saved ? JSON.parse(saved) : INITIAL_BRANDS;
+        try {
+            const saved = localStorage.getItem(LOCAL_STORAGE_BRANDS_KEY);
+            const parsed = saved ? JSON.parse(saved) : [];
+            const merged = Array.from(new Set([...INITIAL_BRANDS, ...parsed]));
+            return merged;
+        } catch (e) {
+            console.warn(`Failed to parse brands from localStorage: ${e}`);
+            return INITIAL_BRANDS;
+        }
     });
 
     // 画像プレビュー用
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null); // DOM要素（inputファイル等）に直接アクセスするための仕組み
+    const [imagePreview, setImagePreview] = useState<string | null>(editCosme?.image_url || null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [colors, setColors] = useState<CosmeticColor[]>([]); // 登録された色のリスト
-    const [activeColorId, setActiveColorId] = useState<string | null>(null); // 現在編集中の色のID
+    const [colors, setColors] = useState<CosmeticColor[]>(() => {
+        if (editCosme?.color_hex || editCosme?.hex) {
+            const hex = editCosme.color_hex || editCosme.hex;
+            const cNum = editCosme.color_number || editCosme.colorNumber;
+            return [{
+                id: editCosme.id ? `edit-${editCosme.id}` : 'edit-color',
+                hex: hex,
+                transparency: editCosme.transparency || 100,
+                colorNumber: cNum || "",
+                pccs: findClosestPccs(hex)
+            }];
+        }
+        return [];
+    });
+    const [activeColorId, setActiveColorId] = useState<string | null>(colors.length > 0 ? colors[0].id : (editCosme?.hex ? 'edit-color' : null));
 
     // --- ロジック関数 ---
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,7 +173,11 @@ const CosmeRegister: React.FC = () => {
         const newId = Math.random().toString(36).substr(2, 9); // ランダムなIDを生成
         const pccs = findClosestPccs(sanitizedHex);
         const newColor: CosmeticColor = {
-            id: newId, hex: sanitizedHex, transparency: 100, colorNumber: "", pccs
+            id: newId,
+            hex: sanitizedHex,
+            transparency: 100,
+            colorNumber: itemColorNumber, // 常に共通の色番をデフォルトにする
+            pccs
         };
         setColors([...colors, newColor]);
         setActiveColorId(newId);
@@ -161,14 +187,12 @@ const CosmeRegister: React.FC = () => {
         setColors(colors.map(c => {
             if (c.id === id) {
                 let updatedValue = value;
-                // HEXが8桁（#RRGGBBAA）で渡された場合、ブラウザのピッカーが対応していないため7桁に調整します
                 if (field === 'hex' && typeof value === 'string' && value.length > 7) {
                     updatedValue = value.substring(0, 7);
                 }
-
                 const updated = { ...c, [field]: updatedValue };
                 if (field === 'hex') {
-                    updated.pccs = findClosestPccs(updatedValue as string); // 色が変わったらPCCSも再計算
+                    updated.pccs = findClosestPccs(updatedValue as string);
                 }
                 return updated;
             }
@@ -177,42 +201,86 @@ const CosmeRegister: React.FC = () => {
     };
 
     const handleSave = async () => {
-        // 新しいブランドであればリストに追加して保存
         if (brand && !brands.includes(brand)) {
             const newBrands = [...brands, brand];
             setBrands(newBrands);
-            localStorage.setItem('ml_brands', JSON.stringify(newBrands));
+            localStorage.setItem(LOCAL_STORAGE_BRANDS_KEY, JSON.stringify(newBrands));
         }
 
-        // 本来はここでバックエンドのAPIを叩きます
-        const postData = {
-            category, brand, name, texture, memo,
-            colors: colors.map(c => ({
-                hex: c.hex,
-                transparency: c.transparency,
-                color_number: c.colorNumber
-            }))
-        };
-        console.log("Saving cosme:", postData);
-        alert(`${brand} ${name} を登録しました！`);
+        try {
+            // 選択された画像が Blob (一時URL) の場合はサーバーにアップロード
+            let finalImageUrl = imagePreview;
+            if (imagePreview && imagePreview.startsWith('blob:')) {
+                const response = await fetch(imagePreview);
+                const blob = await response.blob();
+                const formData = new FormData();
+                formData.append('file', blob, 'cosme.jpg');
+                const uploadRes = await axios.post('/upload/', formData);
+                finalImageUrl = uploadRes.data.image_url;
+            }
 
-        // 登録完了後はホーム画面（gallery）に戻る
-        navigate("/");
+            if (editCosme?.id) {
+                // 更新モード (PUT)
+                const c = colors[0];
+                await axios.put(`/cosmetics/${editCosme.id}`, {
+                    category,
+                    brand,
+                    name,
+                    texture,
+                    memo,
+                    color_number: c.colorNumber,
+                    color_hex: c.hex,
+                    transparency: c.transparency,
+                    image_url: finalImageUrl
+                });
+                alert(`${brand} ${name} を更新しました！`);
+            } else {
+                // 新規登録モード (POST)
+                await Promise.all(colors.map(c =>
+                    axios.post('/cosmetics/', {
+                        category,
+                        brand,
+                        name,
+                        texture,
+                        memo,
+                        color_number: c.colorNumber,
+                        color_hex: c.hex,
+                        transparency: c.transparency,
+                        image_url: finalImageUrl
+                    })
+                ));
+                alert(`${brand} ${name} を登録しました！`);
+            }
+
+            navigate(returnPath || "/cosme");
+        } catch (error) {
+            console.error("Failed to save cosmetic:", error);
+            alert("保存に失敗しました。サーバーの状態を確認してください。");
+        }
     };
 
     // 現在のカテゴリに基づいたパレットと質感を決定
     const currentPalette = CATEGORY_PALETTES[category] || DEFAULT_PALETTE;
-    const currentTextures = CATEGORY_TEXTURES[category] || DEFAULT_TEXTURES;
+    const currentTextures = CATEGORY_TEXTURES[category] || CATEGORY_TEXTURES["Others"];
 
     // --- 5. 画面表示 (JSX) ---
     return (
         <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20 font-sans">
             {/* ヘッダー部分 */}
             <div className="bg-white px-6 py-4 shadow-sm flex items-center justify-between sticky top-0 z-10">
-                <button onClick={() => setStep(Math.max(1, step - 1))} className="p-2 -ml-2 text-slate-400">
+                <button
+                    onClick={() => {
+                        if (step > 1) {
+                            setStep(step - 1);
+                        } else {
+                            navigate(returnPath || -1 as any);
+                        }
+                    }}
+                    className="p-2 -ml-2 text-slate-400"
+                >
                     <ChevronLeft />
                 </button>
-                <h1 className="text-lg font-bold text-slate-800">コスメを登録</h1>
+                <h1 className="text-lg font-bold text-slate-800">{editCosme?.id ? "コスメを編集" : "コスメを登録"}</h1>
                 <div className="w-10"></div>
             </div>
 
@@ -249,7 +317,7 @@ const CosmeRegister: React.FC = () => {
                                 onChange={e => setBrand(e.target.value)}
                                 list="brand-list"
                                 className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none"
-                                placeholder="例: SHISEIDO"
+                                placeholder="例: 資生堂"
                             />
                             <datalist id="brand-list">
                                 {brands.map(b => <option key={b} value={b} />)}
@@ -258,6 +326,10 @@ const CosmeRegister: React.FC = () => {
                         <label className="block">
                             <span className="text-sm font-bold text-slate-500 mb-2 block">商品名</span>
                             <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例: エッセンス スキングロウ ファンデーション" />
+                        </label>
+                        <label className="block">
+                            <span className="text-sm font-bold text-slate-500 mb-2 block">色番号・色名（任意）</span>
+                            <input type="text" value={itemColorNumber} onChange={e => setItemColorNumber(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-white shadow-inner focus:ring-2 focus:ring-pink-300 outline-none" placeholder="例: 130 Opal / 06 フィグフィグ" />
                         </label>
                         <label className="block">
                             <span className="text-sm font-bold text-slate-500 mb-2 block">メモ</span>
@@ -282,11 +354,14 @@ const CosmeRegister: React.FC = () => {
                 {step === 3 && (
                     <div className="space-y-8 animate-in slide-in-from-right duration-500">
                         {/* 画像アップロード */}
-                        <div onClick={() => fileInputRef.current?.click()} className="relative aspect-video bg-white rounded-3xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shadow-inner group transition-all hover:border-pink-300 cursor-pointer">
-                            {imagePreview ? <img src={imagePreview} className="w-full h-full object-cover" alt="cosme" /> : (
-                                <div className="text-center group-hover:scale-110 transition-transform">
-                                    <div className="bg-slate-50 p-4 rounded-full inline-block mb-3"><Camera className="text-slate-400" size={32} /></div>
-                                    <p className="text-sm text-slate-400 font-medium">商品の写真を撮る / 選択</p>
+                        <div onClick={() => fileInputRef.current?.click()} className="relative aspect-video bg-white rounded-3xl border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden shadow-inner group transition-all hover:border-pink-400 cursor-pointer">
+                            {/* 背景画像 (アップロード画像 または カテゴリ別デフォルト画像) */}
+                            <img src={imagePreview || getDefaultCosmeImage(category)} className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${imagePreview ? 'opacity-100 scale-100' : 'opacity-15 group-hover:scale-105'}`} alt="cosme background" />
+
+                            {!imagePreview && (
+                                <div className="relative z-10 text-center group-hover:scale-110 transition-transform px-6 py-5 rounded-3xl">
+                                    <div className="bg-pink-100/50 p-4 rounded-full inline-block mb-3"><Camera className="text-pink-500" size={32} /></div>
+                                    <p className="text-[13px] text-slate-700 font-bold tracking-tight">商品の写真を撮る / 選択</p>
                                 </div>
                             )}
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
