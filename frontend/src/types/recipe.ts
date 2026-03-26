@@ -6,13 +6,17 @@ export interface PinCosmeticItem {
     masterMemo: string;  // 【コスメ自体のメモ】質感や特徴（図鑑に保存される）
     category?: string;
     texture?: string;
-    hex?: string;
+    hex?: string;              // 代表色（単色または先頭シェード）
+    shadeHexes?: string[];     // パレット等の全シェード色（最大4）
     colorNumber?: string;
+    imageUrl?: string;
+    cosmetic_master_id?: number; // 図鑑のDB ID（更新時に使用）
     pccsTone?: string;
     pccsHue?: number;
     saveToMyCosme?: boolean;
     isFromDictionary?: boolean; // 図鑑から直接選択されたかどうかの判定フラグ
 }
+
 
 export interface PinItem {
     id: string;          // ピンのユニークID

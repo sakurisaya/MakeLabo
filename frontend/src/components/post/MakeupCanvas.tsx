@@ -69,7 +69,7 @@ export const MakeupCanvas = ({ imageUrl, pins, onAddPin, onSelectPin, onMovePin,
         <div
             ref={containerRef}
             onClick={handleClick}
-            className="relative inline-block w-full overflow-hidden rounded-3xl shadow-inner bg-slate-100 touch-none"
+            className="relative inline-block w-full overflow-hidden shadow-inner bg-slate-100 touch-none"
         >
             <img
                 src={imageUrl}

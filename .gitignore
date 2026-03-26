@@ -1,0 +1,19 @@
+# Pythonの不要ファイル
+__pycache__/
+*.pyc
+venv/
+
+# テスト・開発用スクリプト（公開不要）
+backend/test_pccs.py
+backend/test2.py
+
+# データベース（本番は別途用意するため除外）
+backend/mua_recipe.db
+
+# フロントエンドの不要ファイル
+frontend/node_modules/
+frontend/dist/
+
+# メモ・ドキュメント（公開不要）
+memo/
+docs/

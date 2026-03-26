@@ -184,12 +184,14 @@ async def upload_image(file: UploadFile = File(...)):
 def create_cosmetic(cosmetic: schemas.CosmeticMasterCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """
     自分の持っているコスメを図鑑に登録する。
-    重複（ブランド名＋商品名が一致）があれば既存のものを返す。
+    重複（ブランド名＋商品名＋色番号＋カテゴリ＋色HEXが一致）があれば既存のものを返す。
     """
     existing = db.query(models.CosmeticMaster).filter(
         models.CosmeticMaster.brand == cosmetic.brand,
         models.CosmeticMaster.name == cosmetic.name,
-        models.CosmeticMaster.color_number == cosmetic.color_number
+        models.CosmeticMaster.color_number == cosmetic.color_number,
+        models.CosmeticMaster.category == cosmetic.category,
+        models.CosmeticMaster.color_hex == cosmetic.color_hex
     ).first()
     
     if existing:
@@ -333,11 +335,15 @@ def create_recipe(recipe: schemas.RecipeCreate, db: Session = Depends(get_db), t
             # 3. 画像に紐付くピン（アイテム）の作成
             for item_data in img_data.items:
                 cosme_id = None
-                if item_data.brand and item_data.name:
+                if item_data.cosmetic_master_id:
+                    cosme_id = item_data.cosmetic_master_id
+                elif item_data.brand and item_data.name:
                     existing = db.query(models.CosmeticMaster).filter(
                         models.CosmeticMaster.brand == item_data.brand,
                         models.CosmeticMaster.name == item_data.name,
-                        models.CosmeticMaster.color_number == item_data.color_number
+                        models.CosmeticMaster.color_number == item_data.color_number,
+                        models.CosmeticMaster.category == (item_data.category or "未分類"),
+                        models.CosmeticMaster.color_hex == (item_data.color_hex or "#FFFFFF")
                     ).first()
                     if existing:
                         cosme_id = existing.id
@@ -417,11 +423,15 @@ def update_recipe(recipe_id: int, recipe: schemas.RecipeCreate, db: Session = De
 
             for item_data in img_data.items:
                 cosme_id = None
-                if item_data.brand and item_data.name:
+                if item_data.cosmetic_master_id:
+                    cosme_id = item_data.cosmetic_master_id
+                elif item_data.brand and item_data.name:
                     existing = db.query(models.CosmeticMaster).filter(
                         models.CosmeticMaster.brand == item_data.brand,
                         models.CosmeticMaster.name == item_data.name,
-                        models.CosmeticMaster.color_number == item_data.color_number
+                        models.CosmeticMaster.color_number == item_data.color_number,
+                        models.CosmeticMaster.category == (item_data.category or "未分類"),
+                        models.CosmeticMaster.color_hex == (item_data.color_hex or "#FFFFFF")
                     ).first()
                     if existing:
                         cosme_id = existing.id

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import type { Recipe } from '../types/recipe';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
-import { Copy, Trash2, Edit, Share2, MoreVertical, X } from 'lucide-react';
+import { Copy, Trash2, Edit, Share2, MoreVertical, X, LayoutGrid, List } from 'lucide-react';
 
 interface Props {
     onNavigateToPost: (recipeToEdit?: Recipe) => void;
@@ -13,6 +13,14 @@ export const History = ({ onNavigateToPost }: Props) => {
     const navigate = useNavigate();
     const [recipes, setRecipes] = useState<Recipe[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'card' | 'tile'>(() => {
+        return (localStorage.getItem('makelabo_gallery_viewMode') as 'card' | 'tile') || 'card';
+    });
+    
+    useEffect(() => {
+        localStorage.setItem('makelabo_gallery_viewMode', viewMode);
+    }, [viewMode]);
+
     const [longPressedRecipe, setLongPressedRecipe] = useState<Recipe | null>(null);
     const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
     const longPressTimer = useRef<any | null>(null);
@@ -35,23 +43,41 @@ export const History = ({ onNavigateToPost }: Props) => {
                     image: img.image_path,
                     isThumbnail: img.is_thumbnail,
                     isMakeMap: img.is_make_map,
-                    pins: img.items.map((it: any) => ({
-                        id: String(it.id),
-                        x: it.x_position,
-                        y: it.y_position,
-                        label: it.pin_label,
-                        isDefault: it.is_default_pin,
-                        items: it.cosmetic_master ? [{
-                            brand: it.cosmetic_master.brand,
-                            name: it.cosmetic_master.name,
-                            usageMemo: it.pin_memo,
-                            masterMemo: it.cosmetic_master.memo,
-                            category: it.cosmetic_master.category,
-                            texture: it.cosmetic_master.texture,
-                            colorNumber: it.cosmetic_master.color_number,
-                            hex: it.cosmetic_master.color_hex,
-                        }] : []
-                    }))
+                    pins: (() => {
+                        const pinMap = new Map<string, any>();
+                        img.items.forEach((it: any) => {
+                            const key = `${it.x_position}-${it.y_position}-${it.is_default_pin}-${it.pin_label}`;
+                            if (!pinMap.has(key)) {
+                                pinMap.set(key, {
+                                    id: String(it.id),
+                                    x: it.x_position,
+                                    y: it.y_position,
+                                    label: it.pin_label,
+                                    isDefault: it.is_default_pin,
+                                    items: []
+                                });
+                            }
+                            if (it.cosmetic_master) {
+                                pinMap.get(key).items.push({
+                                    id: String(it.cosmetic_master.id),
+                                    isFromDictionary: true,
+                                    brand: it.cosmetic_master.brand,
+                                    name: it.cosmetic_master.name,
+                                    usageMemo: it.pin_memo,
+                                    masterMemo: it.cosmetic_master.memo,
+                                    category: it.cosmetic_master.category,
+                                    texture: it.cosmetic_master.texture,
+                                    colorNumber: it.cosmetic_master.color_number,
+                                    hex: it.cosmetic_master.color_hex,
+                                    image_url: it.cosmetic_master.image_url,
+                                    imageUrl: it.cosmetic_master.image_url,
+                                    pccsTone: it.cosmetic_master.pccs_tone,
+                                    pccsHue: it.cosmetic_master.pccs_hue,
+                                });
+                            }
+                        });
+                        return Array.from(pinMap.values());
+                    })()
                 }))
             }));
             setRecipes(formatted);
@@ -68,16 +94,6 @@ export const History = ({ onNavigateToPost }: Props) => {
         fetchRecipes();
     }, []);
 
-    const getWeatherIcon = (weather: string) => {
-        switch (weather) {
-            case 'hot': return '🌡️';
-            case 'sunny': return '☀️';
-            case 'cloudy': return '☁️';
-            case 'rainy': return '☔';
-            case 'snowy': return '⛄';
-            default: return '☀️';
-        }
-    };
 
     const handleTouchStart = (recipe: Recipe, e: React.TouchEvent | React.MouseEvent) => {
         const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
@@ -181,17 +197,101 @@ export const History = ({ onNavigateToPost }: Props) => {
         );
     }
 
-    return (
-        <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <h2 className="text-2xl font-black text-slate-800 mb-8 flex items-center gap-3">
-                <span className="w-2 h-8 bg-pink-500 rounded-full"></span>
-                Makeup Recipes
-            </h2>
+    // 共通のカラー抽出ロジック
+    const getRecipeColors = (recipe: Recipe) => {
+        const colors: { hex: string, cat: string, pccs?: string }[] = [];
+        const seenMatches = new Set<string>();
 
-            <div className="grid grid-cols-1 gap-6">
+        recipe.slides.forEach(s => {
+            s.pins.forEach(p => {
+                p.items.forEach(it => {
+                    const cleanCat = it.category?.trim() || "未分類";
+                    // ベース系・ライン系・コントゥアリングは色合いの参考にならないため除外
+                    const excludeCats = ["ベース", "アイライナー", "アイブロウ", "マスカラ", "コントゥアリング"];
+                    if (excludeCats.includes(cleanCat) || !it.hex) return;
+                    
+                    const hexStr = it.hex || "#FFFFFF";
+                    const key = `${hexStr}-${cleanCat}`;
+                    if (!seenMatches.has(key)) {
+                        colors.push({ 
+                            hex: hexStr, 
+                            cat: cleanCat, 
+                            pccs: it.pccsTone ? `${it.pccsTone}${it.pccsHue}` : undefined 
+                        });
+                        seenMatches.add(key);
+                    }
+                });
+            });
+        });
+        return colors;
+    };
+
+    return (
+        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-4xl p-4 md:p-6'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+            <div className={`flex items-center justify-between ${viewMode === 'tile' ? 'p-4 pb-2' : 'mb-8'}`}>
+                <h2 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-3">
+                    <span className="w-2 h-6 md:h-8 bg-pink-500 rounded-full"></span>
+                    Makeup Recipes
+                </h2>
+                
+                <div className="flex bg-slate-100/80 p-0.5 md:p-1 rounded-xl shadow-inner mb-2 md:mb-0">
+                    <button 
+                        onClick={() => setViewMode('card')} 
+                        className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                        aria-label="カード表示"
+                    >
+                        <List size={18} />
+                    </button>
+                    <button 
+                        onClick={() => setViewMode('tile')} 
+                        className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                        aria-label="タイル表示"
+                    >
+                        <LayoutGrid size={18} />
+                    </button>
+                </div>
+            </div>
+
+            <div className={`grid ${viewMode === 'tile' ? 'grid-cols-3 md:grid-cols-5 gap-0' : 'grid-cols-1 gap-6'}`}>
                 {recipes.map((recipe) => {
                     const thumbnailSlide = recipe.slides.find(s => s.isThumbnail) || recipe.slides[0];
                     const displayImage = thumbnailSlide?.image || DEFAULT_FACE_IMAGE;
+
+                    if (viewMode === 'tile') {
+                        return (
+                            <div
+                                key={recipe.id}
+                                onClick={() => {
+                                    if (!longPressedRecipe) navigate(`/recipe/${recipe.id}`, { state: { recipe } });
+                                }}
+                                onMouseDown={(e) => handleTouchStart(recipe, e)}
+                                onMouseUp={handleTouchEnd}
+                                onMouseLeave={handleTouchEnd}
+                                onTouchStart={(e) => handleTouchStart(recipe, e)}
+                                onTouchEnd={handleTouchEnd}
+                                className={`aspect-square relative cursor-pointer overflow-hidden bg-slate-200 group ${longPressedRecipe?.id === recipe.id ? 'ring-4 ring-pink-500 z-10' : ''}`}
+                            >
+                                <img
+                                    src={displayImage}
+                                    alt={recipe.overallData?.title}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                
+                                {/* カラーチップ (画像の上に配置) */}
+                                <div className="absolute bottom-1 right-1 flex flex-wrap justify-end gap-[2px] pointer-events-none p-0.5 z-10">
+                                    {getRecipeColors(recipe).slice(0, 5).map((c, i) => (
+                                        <div
+                                            key={i}
+                                            className="w-2.5 h-2.5 rounded-full shadow-sm border border-white/80"
+                                            style={{ backgroundColor: c.hex }}
+                                            title={`${c.cat}: ${c.pccs || c.hex}`}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    }
 
                     return (
                         <div
@@ -221,25 +321,35 @@ export const History = ({ onNavigateToPost }: Props) => {
                                         {recipe.overallData?.title || "無題のレシピ"}
                                     </h3>
 
-                                    <div className="flex items-center gap-4 mt-2">
-                                        <div className="flex items-center text-yellow-400">
-                                            {[...Array(5)].map((_, i) => (
-                                                <span key={i} className={`text-sm ${i < (recipe.overallData?.rating || 0) ? 'opacity-100' : 'opacity-20'}`}>★</span>
-                                            ))}
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-bold">
-                                            <span>{getWeatherIcon(recipe.overallData?.weather)}</span>
-                                            <span className="font-sans">{recipe.overallData?.date}</span>
-                                        </div>
+                                    {/* メモの冒頭表示 */}
+                                    {recipe.overallData?.memo && (
+                                        <p className="text-[11px] font-medium text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+                                            {recipe.overallData.memo}
+                                        </p>
+                                    )}
+
+                                    {/* カラーチップの表示 (すべてのコスメ) */}
+                                    <div className="flex items-center gap-1.5 mt-3">
+                                        {getRecipeColors(recipe).slice(0, 8).map((c, i) => (
+                                            <div
+                                                key={i}
+                                                className="w-3.5 h-3.5 rounded-full border border-white shadow-sm ring-1 ring-black/5"
+                                                style={{ backgroundColor: c.hex }}
+                                                title={`${c.cat}: ${c.pccs || c.hex}`}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
 
-                                <div className="flex flex-wrap gap-2 mt-auto">
-                                    {(recipe.overallData?.tags || []).slice(0, 3).map((tag, idx) => (
-                                        <span key={idx} className="px-3 py-1 bg-slate-50 text-slate-500 text-[10px] font-bold rounded-full uppercase tracking-wider">
-                                            #{tag}
-                                        </span>
-                                    ))}
+                                <div className="flex items-center justify-between mt-auto">
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {(recipe.overallData?.tags || []).slice(0, 2).map((tag, idx) => (
+                                            <span key={idx} className="px-2 py-0.5 bg-slate-50 text-slate-400 text-[9px] font-bold rounded-full uppercase tracking-wider">
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-300 font-sans">{recipe.overallData?.date}</span>
                                 </div>
                             </div>
 
@@ -319,7 +429,7 @@ export const History = ({ onNavigateToPost }: Props) => {
 
             <button
                 onClick={() => onNavigateToPost()}
-                className="fixed bottom-8 right-8 w-16 h-16 bg-pink-500 text-white rounded-full shadow-2xl shadow-pink-200 flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"
+                className="fixed bottom-18 right-8 w-16 h-16 bg-pink-500 text-white rounded-full shadow-2xl shadow-pink-200 flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"
             >
                 <span className="transition-transform duration-300 group-hover:rotate-90">＋</span>
             </button>

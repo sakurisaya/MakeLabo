@@ -28,13 +28,24 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
     const [slides, setSlides] = useState<RecipeSlide[]>(() => {
         if (initialData?.slides && Array.isArray(initialData.slides)) {
             // 他の画面からのデータ（不足フィールドがある可能性）を正規化
-            return initialData.slides.map((s: any, idx: number) => ({
-                id: s.id || `slide-${idx}-${Date.now()}`,
-                image: s.image,
-                pins: Array.isArray(s.pins) ? s.pins : [],
-                isThumbnail: !!s.isThumbnail,
-                isMakeMap: !!s.isMakeMap
-            }));
+            return initialData.slides.map((s: any, idx: number) => {
+                let currentPins = Array.isArray(s.pins) ? s.pins : [];
+                if (s.isMakeMap) {
+                    const existingLabels = currentPins.map((p: any) => p.label).filter(Boolean);
+                    const missingDefaults = DEFAULT_MAKEUP_PINS.filter(dp => !existingLabels.includes(dp.label)).map((p, index) => ({
+                        id: `default-${p.part}-${idx}-${index}`,
+                        x: p.x, y: p.y, items: [], isSaved: false, label: p.label, isDefault: true
+                    }));
+                    currentPins = [...currentPins, ...missingDefaults];
+                }
+                return {
+                    id: s.id || `slide-${idx}-${Date.now()}`,
+                    image: s.image,
+                    pins: currentPins,
+                    isThumbnail: !!s.isThumbnail,
+                    isMakeMap: !!s.isMakeMap
+                };
+            });
         }
         // 初期状態では「ノーメイク顔のイラスト」と基本のピンを配置
         return [{
@@ -157,6 +168,7 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
                     is_thumbnail: s.isThumbnail,
                     is_make_map: s.isMakeMap,
                     items: s.pins.flatMap(p => (p.items || []).map(item => ({
+                        cosmetic_master_id: item.isFromDictionary ? parseInt(item.id.replace('edit-', ''), 10) : null,
                         x_position: p.x,
                         y_position: p.y,
                         pin_memo: item.usageMemo || "", // レシピ固有
@@ -166,7 +178,9 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
                         brand: item.brand || null,
                         memo: item.masterMemo || null, // コスメ自体の特徴
                         color_number: item.colorNumber || null,
-                        color_hex: item.hex || null
+                        color_hex: item.hex || null,
+                        category: item.category || null,
+                        texture: item.texture || null
                     })))
                 }))
             };
@@ -349,10 +363,10 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
                             </label>
 
                             <div className="flex flex-wrap gap-2">
-                                {overallData.tags.map(tag => (
+                                {overallData.tags.map((tag: string) => (
                                     <span key={tag} className="px-3 py-1 bg-pink-50 text-pink-500 rounded-full text-[10px] font-black border border-pink-100 flex items-center gap-1">
                                         #{tag}
-                                        <button onClick={() => setOverallData({ ...overallData, tags: overallData.tags.filter(t => t !== tag) })} className="hover:text-pink-700">×</button>
+                                        <button onClick={() => setOverallData({ ...overallData, tags: overallData.tags.filter((t: string) => t !== tag) })} className="hover:text-pink-700">×</button>
                                     </span>
                                 ))}
                                 <button onClick={() => {

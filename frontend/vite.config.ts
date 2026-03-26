@@ -8,7 +8,8 @@ export default defineConfig({
     proxy: {
       '/cosmetics': 'http://localhost:8000',
       '/recipes': 'http://localhost:8000',
-      '/upload-image': 'http://localhost:8000',
+      '/upload': 'http://localhost:8000',
+      '/static': 'http://localhost:8000',
     }
   }
 })

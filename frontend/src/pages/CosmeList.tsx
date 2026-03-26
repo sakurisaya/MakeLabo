@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Copy, Trash2, Edit, MoreVertical, Plus, Search } from 'lucide-react';
+import { Copy, Trash2, Edit, MoreVertical, Plus, Search, LayoutGrid, List } from 'lucide-react';
 import { getDefaultCosmeImage } from '../utils/imageUtils';
 
 interface Cosmetic {
@@ -14,6 +14,8 @@ interface Cosmetic {
     memo?: string;
     image_url?: string;
     color_hex: string;
+    pccs_tone?: string;
+    pccs_hue?: number;
 }
 
 const CATEGORIES = ["ベース", "アイシャドウ", "アイライナー", "マスカラ", "アイブロウ", "チーク", "リップ", "コントゥアリング", "Others"];
@@ -22,9 +24,13 @@ export const CosmeList = () => {
     const navigate = useNavigate();
     const [cosmetics, setCosmetics] = useState<Cosmetic[]>([]);
     const [loading, setLoading] = useState(true);
+    const [viewMode, setViewMode] = useState<'card' | 'tile'>(() => {
+        return (localStorage.getItem('makelabo_cosme_viewMode') as 'card' | 'tile') || 'card';
+    });
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [longPressedId, setLongPressedId] = useState<number | null>(null);
+    const [longPressedVariantIds, setLongPressedVariantIds] = useState<number[]>([]);
     const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
 
     const fetchCosmetics = async () => {
@@ -42,14 +48,20 @@ export const CosmeList = () => {
         fetchCosmetics();
     }, []);
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("このコスメを図鑑から削除してもよろしいですか？")) return;
+    useEffect(() => {
+        localStorage.setItem('makelabo_cosme_viewMode', viewMode);
+    }, [viewMode]);
+
+    // グループ内の全バリアントを削除する（多色登録でも1商品丸ごと削除）
+    const handleDelete = async (ids: number[]) => {
+        if (!window.confirm(`このコスメを図鑑から削除してもよろしいですか？`)) return;
         try {
-            await axios.delete(`/cosmetics/${id}`);
-            setCosmetics(cosmetics.filter(c => c.id !== id));
+            await Promise.all(ids.map(id => axios.delete(`/cosmetics/${id}`)));
+            setCosmetics(prev => prev.filter(c => !ids.includes(c.id)));
             setLongPressedId(null);
+            setLongPressedVariantIds([]);
         } catch (e) {
-            alert("削除に失敗しました。");
+            alert('削除に失敗しました。');
         }
     };
 
@@ -64,11 +76,21 @@ export const CosmeList = () => {
         }
     };
 
-    // グルーピングロジック: ブランド、名前、そして「色番号」が同じものをまとめる
-    const groupedCosmetics = useMemo(() => {
+    // 絞り込みとグルーピングを統合：まずフィルタリングし、その結果に対してグルーピングを行う
+    const filteredGroups = useMemo(() => {
+        // 1. 検索クエリとカテゴリでフィルタリング
+        const filtered = cosmetics.filter(c => {
+            const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                c.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (c.color_number && c.color_number.toLowerCase().includes(searchQuery.toLowerCase()));
+            const matchesCategory = selectedCategory ? (c.category?.trim() === selectedCategory.trim()) : true;
+            return matchesSearch && matchesCategory;
+        });
+
+        // 2. グルーピングロジック: ブランド、名前、そして「色番号」が同じものをまとめる
         const groups: Record<string, { brand: string, name: string, color_number?: string, category: string, image_url?: string, variants: Cosmetic[] }> = {};
 
-        cosmetics.forEach(c => {
+        filtered.forEach(c => {
             // 色番号も含めてキーにすることで、色番違いを別カードとして扱う
             const key = `${c.brand}-${c.name}-${c.color_number || 'no-number'}`;
             if (!groups[key]) {
@@ -90,15 +112,7 @@ export const CosmeList = () => {
             const maxIdB = Math.max(...b.variants.map(v => v.id));
             return maxIdB - maxIdA;
         });
-    }, [cosmetics]);
-
-    const filteredGroups = groupedCosmetics.filter(g => {
-        const matchesSearch = g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            g.brand.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (g.color_number && g.color_number.toLowerCase().includes(searchQuery.toLowerCase()));
-        const matchesCategory = selectedCategory ? g.category === selectedCategory : true;
-        return matchesSearch && matchesCategory;
-    });
+    }, [cosmetics, searchQuery, selectedCategory]);
 
     if (loading) {
         return (
@@ -110,12 +124,28 @@ export const CosmeList = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-4 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <header className="mb-8">
-                <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-3">
-                    <span className="w-2 h-8 bg-pink-500 rounded-full"></span>
-                    My Cosmetics
-                </h2>
+        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-4xl p-4 md:p-6'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+            <header className={`mb-8 ${viewMode === 'tile' ? 'p-4 pb-0' : ''}`}>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-3">
+                        <span className="w-2 h-6 md:h-8 bg-pink-500 rounded-full"></span>
+                        My Cosmetics
+                    </h2>
+                    <div className="flex bg-slate-100/80 p-0.5 md:p-1 rounded-xl shadow-inner">
+                        <button 
+                            onClick={() => setViewMode('card')} 
+                            className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            <List size={18} />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('tile')} 
+                            className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                        >
+                            <LayoutGrid size={18} />
+                        </button>
+                    </div>
+                </div>
 
                 <div className="space-y-4">
                     {/* 検索バー */}
@@ -152,23 +182,55 @@ export const CosmeList = () => {
             </header>
 
             {filteredGroups.length === 0 ? (
-                <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100">
+                <div className={`text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 ${viewMode === 'tile' ? 'mx-4' : ''}`}>
                     <p className="text-slate-300 font-black text-sm uppercase tracking-widest">No Items Found</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 gap-5">
+                <div className={`grid ${viewMode === 'tile' ? 'grid-cols-3 md:grid-cols-5 gap-0' : 'grid-cols-2 gap-5'}`}>
                     {filteredGroups.map((group) => {
                         const mainVariant = group.variants[0]; // 代表アイテム
+                        
+                        // タイル表示の場合
+                        if (viewMode === 'tile') {
+                            return (
+                                <div
+                                    key={`${group.brand}-${group.name}`}
+                                    onClick={() => navigate(`/cosme/${mainVariant.id}`)}
+                                    className="aspect-square relative cursor-pointer overflow-hidden bg-white group border-[0.5px] border-slate-100"
+                                >
+                                    <img
+                                        src={group.image_url || getDefaultCosmeImage(group.category)}
+                                        className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                                        alt={group.name}
+                                    />
+                                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    
+                                    {/* カラーチップ (画像の上に配置) */}
+                                    <div className="absolute bottom-1 right-1 flex flex-wrap justify-end gap-[2px] pointer-events-none p-0.5 z-10">
+                                        {group.variants.slice(0, 5).map((v) => (
+                                            <div
+                                                key={v.id}
+                                                className="w-2.5 h-2.5 rounded-full shadow-sm ring-[0.5px] ring-black/10 border border-white/80"
+                                                style={{ backgroundColor: v.color_hex }}
+                                                title={v.pccs_tone ? `${v.pccs_tone}${v.pccs_hue}` : (v.color_number || v.color_hex)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // カード表示の場合
                         return (
                             <div
                                 key={`${group.brand}-${group.name}`}
                                 onClick={() => navigate(`/cosme/${mainVariant.id}`)}
                                 className="bg-white rounded-[2rem] p-4 shadow-sm border border-slate-100 hover:shadow-xl hover:translate-y-[-4px] transition-all cursor-pointer group relative"
                             >
-                                <div className="aspect-[1/1] rounded-2xl overflow-hidden mb-4 bg-slate-50 relative shadow-inner">
+                                <div className="aspect-[1/1] rounded-2xl overflow-hidden mb-4 bg-white relative">
                                     <img
                                         src={group.image_url || getDefaultCosmeImage(group.category)}
-                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        className="w-full h-full object-contain scale-100 transition-transform duration-500 group-hover:scale-105"
                                         alt={group.name}
                                     />
 
@@ -178,20 +240,22 @@ export const CosmeList = () => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setLongPressedId(mainVariant.id);
+                                            setLongPressedVariantIds(group.variants.map(v => v.id));
                                             setMenuPosition({ x: e.clientX, y: e.clientY });
                                         }}
                                     >
                                         <MoreVertical size={14} />
                                     </button>
 
-                                    {/* パレット風の色表示 */}
+                                    {/* パレット風の色表示（各色クリックで詳細へ） */}
                                     <div className="absolute bottom-3 left-3 flex items-center">
                                         {group.variants.slice(0, 6).map((v, i) => (
                                             <div
                                                 key={v.id}
-                                                className="w-5 h-5 rounded-full border-2 border-white shadow-md ring-1 ring-black/5 -ml-1.5 first:ml-0 transition-transform hover:translate-y-[-2px] hover:z-10"
+                                                className="w-5 h-5 rounded-full border-2 border-white shadow-md ring-1 ring-black/5 -ml-1.5 first:ml-0 transition-transform hover:translate-y-[-4px] hover:scale-125 hover:z-20 cursor-pointer"
                                                 style={{ backgroundColor: v.color_hex, zIndex: group.variants.length - i }}
-                                                title={v.color_number}
+                                                title={v.pccs_tone ? `${v.pccs_tone}${v.pccs_hue}` : (v.color_number || v.color_hex)}
+                                                onClick={(e) => { e.stopPropagation(); navigate(`/cosme/${v.id}`); }}
                                             />
                                         ))}
                                         {group.variants.length > 6 && (
@@ -209,7 +273,7 @@ export const CosmeList = () => {
                                         <p className="text-[10px] font-bold text-slate-400 truncate tracking-tight">{group.color_number}</p>
                                     )}
                                     <div className="flex items-center justify-between mt-1 pt-1 border-t border-slate-50">
-                                        <span className="text-[8px] font-black text-slate-200 uppercase tracking-tighter">{group.category}</span>
+                                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-tighter">{group.category}</span>
                                     </div>
                                 </div>
                             </div>
@@ -246,7 +310,7 @@ export const CosmeList = () => {
                         </button>
                         <div className="h-[1px] bg-slate-50 my-1 mx-2"></div>
                         <button
-                            onClick={() => handleDelete(longPressedId)}
+                            onClick={() => handleDelete(longPressedVariantIds)}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-500 hover:bg-red-50 transition-colors"
                         >
                             <Trash2 size={16} /> 削除する
@@ -257,7 +321,7 @@ export const CosmeList = () => {
 
             <button
                 onClick={() => navigate("/cosme/new")}
-                className="fixed bottom-8 right-8 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl hover:bg-pink-500 hover:scale-110 active:scale-95 transition-all z-40 group"
+                className="fixed bottom-20 right-8 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl hover:bg-pink-500 hover:scale-110 active:scale-95 transition-all z-40 group"
             >
                 <Plus size={32} className="transition-transform duration-300 group-hover:rotate-90" />
             </button>

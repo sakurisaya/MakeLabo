@@ -1,11 +1,19 @@
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, PlusCircle, BookOpen } from 'lucide-react';
+import { useEffect } from 'react';
+import { Calendar, Sparkles, BookOpen } from 'lucide-react';
 import { History } from './pages/History';
 import { PostPage } from './pages/PostPage';
 import CosmeRegister from './components/post/CosmeRegister';
 import { RecipeDetail } from './pages/RecipeDetail';
 import { CosmeList } from './pages/CosmeList';
 import { CosmeDetail } from './pages/CosmeDetail';
+
+// ページ遷移のたびにスクロール位置をトップへ戻す
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+};
 
 // --- ナビゲーションバー ---
 const BottomNav = () => {
@@ -19,7 +27,7 @@ const BottomNav = () => {
         <span className="text-[10px] font-bold">gallery</span>
       </Link>
       <Link to="/cosme" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/cosme') ? 'text-pink-500' : 'text-slate-400'}`}>
-        <PlusCircle size={24} />
+        <Sparkles size={24} />
         <span className="text-[10px] font-bold">item</span>
       </Link>
       <Link to="/post" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/post') ? 'text-pink-500' : 'text-slate-400'}`}>
@@ -43,6 +51,7 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 pb-20 overflow-x-hidden">
+      <ScrollToTop />
       {/* メインコンテンツ */}
       <main className="max-w-md mx-auto relative min-h-screen bg-white shadow-xl">
         <Routes>

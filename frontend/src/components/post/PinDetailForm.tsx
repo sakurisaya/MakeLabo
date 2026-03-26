@@ -100,21 +100,69 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
         onChange({ items: (pin.items || []).filter(i => i.id !== itemId) });
     };
 
-    const handleSelectFromMyCosme = (index: number, cosme: any) => {
+    // グループ（同一 brand+name+color_number の全シェード）を一括選択
+    const handleSelectGroup = (index: number, shades: any[]) => {
         const item = (pin.items || [])[index];
-        if (item) {
-            updateItem(item.id, {
-                brand: cosme.brand,
-                name: cosme.name,
-                colorNumber: cosme.color_number, // 追加
-                hex: cosme.color_hex,             // 追加
-                masterMemo: cosme.memo || '',
-                saveToMyCosme: false,
-                isFromDictionary: true
-            });
-        }
+        if (!item) return;
+        const first = shades[0];
+        updateItem(item.id, {
+            brand: first.brand,
+            name: first.name,
+            category: first.category,
+            texture: first.texture,
+            imageUrl: first.image_url,
+            colorNumber: first.color_number || '',
+            hex: first.color_hex,
+            shadeHexes: shades.slice(0, 4).map((s: any) => s.color_hex),
+            masterMemo: first.memo || '',
+            cosmetic_master_id: first.id,
+            saveToMyCosme: false,
+            isFromDictionary: true
+        });
         setShowCosmeSelector(null);
     };
+
+    // コスメを図鑑から削除
+    const handleDeleteCosme = async (cosmeIds: number[]) => {
+        if (!window.confirm('このコスメを図鑑から削除しますか？')) return;
+        try {
+            await Promise.all(cosmeIds.map(id => axios.delete(`/cosmetics/${id}`)));
+            setMyCosmeList(prev => prev.filter((c: any) => !cosmeIds.includes(c.id)));
+        } catch (e) {
+            alert('削除に失敗しました。');
+        }
+    };
+
+    // コスメをbrand+name+color_numberでグループ化し、商品単位でまとめた配列を返す
+    const cosmeGroupList = () => {
+        const groups: Record<string, any[]> = {};
+        filteredCosme.forEach((c: any) => {
+            const colorKey = c.color_number || '色番なし';
+            const key = `${c.brand}__${c.name}__${colorKey}`;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(c);
+        });
+        const groupList = Object.values(groups);
+        groupList.sort((a, b) => {
+            const idxA = CATEGORIES.indexOf(a[0].category);
+            const idxB = CATEGORIES.indexOf(b[0].category);
+            const orderA = idxA === -1 ? 999 : idxA;
+            const orderB = idxB === -1 ? 999 : idxB;
+            if (orderA !== orderB) return orderA - orderB;
+            if (a[0].brand !== b[0].brand) return a[0].brand.localeCompare(b[0].brand);
+            return (a[0].color_number || '').localeCompare(b[0].color_number || '');
+        });
+        // 商品単位（brand+name）でさらにまとめる
+        const productMap: Record<string, any[][]> = {};
+        groupList.forEach(shades => {
+            const productKey = `${shades[0].brand}__${shades[0].name}`;
+            if (!productMap[productKey]) productMap[productKey] = [];
+            productMap[productKey].push(shades);
+        });
+        return Object.values(productMap);
+    };
+
+
 
     const getOrdinal = (n: number) => {
         const s = ["th", "st", "nd", "rd"], v = n % 100;
@@ -143,11 +191,19 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
             <div className="flex-1 overflow-y-auto pr-1 space-y-6 scrollbar-hide pb-4 relative">
                 {(pin.items || []).map((item, index) => (
                     <div key={item.id} className="relative bg-slate-50 rounded-3xl p-5 border border-slate-100/50 group">
-                        {(pin.items || []).length > 1 && (
-                            <button onClick={() => handleRemoveItem(item.id)} className="absolute top-4 right-4 text-slate-300 hover:text-red-400 transition-colors">
-                                <Trash2 size={16} />
-                            </button>
-                        )}
+                        {/* アイテム削除ボタン（単体の場合は内容リセット） */}
+                        <button
+                            onClick={() => {
+                                if ((pin.items || []).length > 1) {
+                                    handleRemoveItem(item.id);
+                                } else {
+                                    updateItem(item.id, { brand: '', name: '', hex: undefined, shadeHexes: undefined, colorNumber: '', isFromDictionary: false, masterMemo: '', usageMemo: '' });
+                                }
+                            }}
+                            className="absolute top-4 right-4 text-slate-300 hover:text-red-400 transition-colors"
+                            title="アイテムを削除/クリア">
+                            <Trash2 size={16} />
+                        </button>
 
                         <div className="flex items-center gap-2 mb-4">
                             <span className="w-5 h-5 bg-pink-500 text-white rounded-md flex items-center justify-center text-[10px] font-bold shadow-sm">{index + 1}</span>
@@ -284,92 +340,6 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
                     </button>
                 )}
 
-                {/* 図鑑セレクター（オーバーレイ） */}
-                {showCosmeSelector !== null && (
-                    <div className="absolute inset-0 z-50 bg-slate-900/10 backdrop-blur-sm rounded-3xl flex flex-col p-2 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 flex-1 flex flex-col overflow-hidden">
-                            <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                                <h4 className="text-[11px] font-black text-slate-800 flex items-center gap-2">
-                                    <Star size={12} className="text-pink-500 fill-pink-500" />
-                                    マイコスメを選択
-                                </h4>
-                                <button onClick={() => setShowCosmeSelector(null)} className="p-1 hover:bg-slate-200 rounded-full transition-colors">
-                                    <X size={14} className="text-slate-400" />
-                                </button>
-                            </div>
-
-                            <div className="p-2 bg-white border-b border-slate-100">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={e => setSearchQuery(e.target.value)}
-                                        placeholder="検索..."
-                                        className="w-full pl-8 pr-4 py-2 bg-slate-100 rounded-xl text-[10px] outline-none focus:ring-2 focus:ring-pink-200 transition-all"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex-1 overflow-y-auto p-2 space-y-3 scrollbar-hide">
-                                {(() => {
-                                    // プロダクトごとにグループ化
-                                    const groups: Record<string, any[]> = {};
-                                    filteredCosme.forEach(c => {
-                                        const key = `${c.brand}-${c.name}`;
-                                        if (!groups[key]) groups[key] = [];
-                                        groups[key].push(c);
-                                    });
-
-                                    const groupList = Object.values(groups);
-
-                                    if (groupList.length === 0) {
-                                        return (
-                                            <div className="py-10 text-center">
-                                                <p className="text-[10px] font-bold text-slate-400">見つかりませんでした</p>
-                                            </div>
-                                        );
-                                    }
-
-                                    return groupList.map((shades, idx) => {
-                                        const first = shades[0];
-                                        return (
-                                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-3xl p-3 space-y-3">
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={first.image_url || getDefaultCosmeImage(first.category)}
-                                                        alt={first.name}
-                                                        className="w-10 h-10 rounded-xl object-cover bg-white shadow-sm flex-shrink-0"
-                                                    />
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="text-[8px] font-black text-pink-400 uppercase tracking-tighter truncate">{first.brand}</div>
-                                                        <div className="text-[10px] font-bold text-slate-800 leading-tight truncate">{first.name}</div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100/50">
-                                                    {shades.map(s => (
-                                                        <button
-                                                            key={s.id}
-                                                            onClick={() => handleSelectFromMyCosme(showCosmeSelector, s)}
-                                                            className="flex items-center gap-1.5 px-2 py-1.5 bg-white border border-slate-200 rounded-full hover:border-pink-300 hover:bg-pink-50 transition-all group"
-                                                            title={s.color_number}
-                                                        >
-                                                            <div className="w-4 h-4 rounded-full border border-slate-100 shadow-inner" style={{ backgroundColor: s.color_hex }} />
-                                                            <span className="text-[9px] font-bold text-slate-600 group-hover:text-pink-600 truncate max-w-[60px]">
-                                                                {s.color_number || '色番なし'}
-                                                            </span>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        );
-                                    });
-                                })()}
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
 
             {/* 完了ボタン */}
@@ -387,6 +357,104 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
                     完了して閉じる
                 </button>
             </div>
+
+            {/* 図鑑セレクター（オーバーレイ）
+                NOTE: スクロールエリアの外（ルートdiv直下）に配置することで、
+                2つ目のアイテムで開いた際もビューポート内に正常表示される */}
+            {showCosmeSelector !== null && (
+                <div className="absolute inset-0 z-50 bg-slate-900/10 backdrop-blur-sm rounded-[2.5rem] flex flex-col p-2 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 flex-1 flex flex-col overflow-hidden">
+                        <div className="p-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                            <h4 className="text-[11px] font-black text-slate-800 flex items-center gap-2">
+                                <Star size={12} className="text-pink-500 fill-pink-500" />
+                                マイコスメを選択
+                            </h4>
+                            <button onClick={() => setShowCosmeSelector(null)} className="p-1 hover:bg-slate-200 rounded-full transition-colors">
+                                <X size={14} className="text-slate-400" />
+                            </button>
+                        </div>
+
+                        <div className="p-2 bg-white border-b border-slate-100">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    placeholder="検索..."
+                                    className="w-full pl-8 pr-4 py-2 bg-slate-100 rounded-xl text-[10px] outline-none focus:ring-2 focus:ring-pink-200 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">
+                            {cosmeGroupList().length === 0 ? (
+                                <div className="py-10 text-center">
+                                    <p className="text-[10px] font-bold text-slate-400">見つかりませんでした</p>
+                                </div>
+                            ) : (() => {
+                                const items: React.ReactNode[] = [];
+                                let lastCategory = '';
+                                cosmeGroupList().forEach((colorGroups, productIdx) => {
+                                    const first = colorGroups[0][0];
+                                    const cat = first.category || 'Others';
+                                    if (cat !== lastCategory) {
+                                        lastCategory = cat;
+                                        items.push(
+                                            <div key={`cat-${cat}-${productIdx}`} className="flex items-center gap-2 px-1 pt-2 pb-1">
+                                                <span className="text-[9px] font-black text-pink-400 uppercase tracking-widest">{cat}</span>
+                                                <div className="flex-1 h-[1px] bg-pink-100" />
+                                            </div>
+                                        );
+                                    }
+                                    const allIds = colorGroups.flatMap(g => g.map((s: any) => s.id));
+                                    items.push(
+                                        <div key={productIdx} className="bg-slate-50 border border-slate-100 rounded-2xl p-2.5 mb-1.5">
+                                            {/* 商品ヘッダー（画像＋名前＋削除ボタン） */}
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <img src={first.image_url || getDefaultCosmeImage(first.category)} alt={first.name}
+                                                    className="w-9 h-9 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-[8px] font-black text-pink-400 uppercase tracking-tighter truncate">{first.brand}</div>
+                                                    <div className="text-[10px] font-bold text-slate-800 leading-tight truncate">{first.name}</div>
+                                                </div>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteCosme(allIds); }}
+                                                    className="p-1.5 rounded-full hover:bg-red-50 text-slate-300 hover:text-red-400 transition-all flex-shrink-0"
+                                                    title="図鑑から削除">
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                            {/* 色番ごとのセレクタブルブロック（クリックで全色セット選択） */}
+                                            <div className="flex flex-wrap gap-2 pt-1.5 border-t border-slate-100/60">
+                                                {colorGroups.map((shades, cgIdx) => {
+                                                    const colorLabel = shades[0].color_number || '色番なし';
+                                                    const previewShades = shades.slice(0, 4);
+                                                    return (
+                                                        <button
+                                                            key={cgIdx}
+                                                            onClick={() => handleSelectGroup(showCosmeSelector, shades)}
+                                                            className="flex flex-col items-center gap-1 p-2 bg-white border border-slate-200 rounded-xl hover:border-pink-300 hover:bg-pink-50 transition-all active:scale-95"
+                                                        >
+                                                            <div className="flex gap-1">
+                                                                {previewShades.map((s: any, si: number) => (
+                                                                    <div key={si} className="w-5 h-5 rounded-full border border-white shadow-sm" style={{ backgroundColor: s.color_hex }} />
+                                                                ))}
+                                                            </div>
+                                                            <span className="text-[8px] font-bold text-slate-500 truncate max-w-[80px] text-center">{colorLabel}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                });
+                                return items;
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
-};
+};

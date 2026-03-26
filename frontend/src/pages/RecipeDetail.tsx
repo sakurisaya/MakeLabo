@@ -40,25 +40,39 @@ export const RecipeDetail = () => {
                         image: img.image_path,
                         isThumbnail: img.is_thumbnail,
                         isMakeMap: img.is_make_map,
-                        pins: img.items.map((it: any) => ({
-                            id: String(it.id),
-                            x: it.x_position,
-                            y: it.y_position,
-                            label: it.pin_label,
-                            isDefault: it.is_default_pin,
-                            items: it.cosmetic_master ? [{
-                                brand: it.cosmetic_master.brand,
-                                name: it.cosmetic_master.name,
-                                usageMemo: it.pin_memo,
-                                masterMemo: it.cosmetic_master.memo,
-                                category: it.cosmetic_master.category,
-                                texture: it.cosmetic_master.texture,
-                                colorNumber: it.cosmetic_master.color_number,
-                                hex: it.cosmetic_master.color_hex,
-                                pccsTone: it.cosmetic_master.pccs_tone,
-                                pccsHue: it.cosmetic_master.pccs_hue,
-                            }] : []
-                        }))
+                        pins: (() => {
+                            const pinMap = new Map<string, any>();
+                            img.items.forEach((it: any) => {
+                                const key = `${it.x_position}-${it.y_position}-${it.is_default_pin}-${it.pin_label}`;
+                                if (!pinMap.has(key)) {
+                                    pinMap.set(key, {
+                                        id: String(it.id),
+                                        x: it.x_position,
+                                        y: it.y_position,
+                                        label: it.pin_label,
+                                        isDefault: it.is_default_pin,
+                                        items: []
+                                    });
+                                }
+                                if (it.cosmetic_master) {
+                                    pinMap.get(key).items.push({
+                                        id: String(it.cosmetic_master.id),
+                                        brand: it.cosmetic_master.brand,
+                                        name: it.cosmetic_master.name,
+                                        usageMemo: it.pin_memo,
+                                        masterMemo: it.cosmetic_master.memo,
+                                        category: it.cosmetic_master.category,
+                                        texture: it.cosmetic_master.texture,
+                                        colorNumber: it.cosmetic_master.color_number,
+                                        imageUrl: it.cosmetic_master.image_url,
+                                        hex: it.cosmetic_master.color_hex,
+                                        pccsTone: it.cosmetic_master.pccs_tone,
+                                        pccsHue: it.cosmetic_master.pccs_hue,
+                                    });
+                                }
+                            });
+                            return Array.from(pinMap.values());
+                        })()
                     }))
                 };
                 setRecipe(formatted);
@@ -182,7 +196,7 @@ export const RecipeDetail = () => {
                                                 onClick={() => setExpandedItemIdx(expandedItemIdx === idx ? null : idx)}
                                             >
                                                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-white">
-                                                    <img src={getDefaultCosmeImage(item.category)} alt={item.name} className="w-full h-full object-cover" />
+                                                    <img src={item.imageUrl || getDefaultCosmeImage(item.category)} alt={item.name} className="w-full h-full object-contain" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-[8px] font-black text-pink-400 uppercase tracking-tight truncate">{item.brand}</div>
