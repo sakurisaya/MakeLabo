@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 // レシピの型定義（以前決めたもの）
 interface Recipe {

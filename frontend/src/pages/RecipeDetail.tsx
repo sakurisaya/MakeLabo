@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Edit2, X, MessageCircle, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react';
 import { MakeupCanvas } from '../components/post/MakeupCanvas';
-import type { Recipe, PinItem, PinCosmeticItem } from '../types/recipe';
+import type { Recipe, PinItem } from '../types/recipe';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
 import { getDefaultCosmeImage } from '../utils/imageUtils';
 
