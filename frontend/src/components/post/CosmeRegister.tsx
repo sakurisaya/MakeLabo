@@ -460,11 +460,11 @@ const CosmeRegister: React.FC = () => {
                         </label>
                         <label className="block">
                             <span className="text-[10px] font-bold text-slate-400 block mb-1">共通の色番号・色名（任意）</span>
-                            <input type="text" value={itemColorNumber} onChange={e => setItemColorNumber(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-pink-200 text-sm font-medium" placeholder="例: 03 桜ピンク" />
+                            <input type="text" value={itemColorNumber} onChange={e => setItemColorNumber(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-pink-200 text-sm font-medium" placeholder="例: 03 ニュートラル" />
                         </label>
                         <label className="block">
                             <span className="text-[10px] font-bold text-slate-400 block mb-1">メモ</span>
-                            <textarea value={memo} onChange={e => setMemo(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-pink-200 text-sm h-20 resize-none font-medium text-slate-600" placeholder="メモ（任意）" />
+                            <textarea value={memo} onChange={e => setMemo(e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 outline-none focus:ring-2 focus:ring-pink-200 text-sm h-20 resize-none font-medium text-slate-600" placeholder="美容処方" />
                         </label>
                         <div>
                             <span className="text-[10px] font-bold text-slate-400 block mb-2">質感</span>
