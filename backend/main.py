@@ -85,7 +85,10 @@ app = FastAPI(lifespan=lifespan)
 # CORS制限の解除（フロントエンドとバックエンドが通信できるように許可）
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # どのドメインからも許可（開発用）
+    allow_origins=[
+        "http://localhost:5173",                         # ローカル開発用
+        "https://main.d2jqhenkd2g20n.amplifyapp.com",   # Amplify本番
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
