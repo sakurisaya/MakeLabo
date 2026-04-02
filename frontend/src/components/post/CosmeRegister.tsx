@@ -3,7 +3,7 @@ import { Camera, Save, ChevronLeft, Plus, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { INITIAL_BRANDS, LOCAL_STORAGE_BRANDS_KEY } from '../../constants/brands';
-import { getDefaultCosmeImage } from '../../utils/imageUtils';
+import { getDefaultCosmeImage, getFullImageUrl } from '../../utils/imageUtils';
 import { PCCS_TABLE } from '../../constants/pccsTable';
 
 // --- 1. 型定義 (Types) ---
@@ -247,7 +247,7 @@ const CosmeRegister: React.FC = () => {
     });
 
     // 画像プレビュー用
-    const [imagePreview, setImagePreview] = useState<string | null>(editImageUrl || null);
+    const [imagePreview, setImagePreview] = useState<string | null>(editImageUrl ? getFullImageUrl(editImageUrl) : null);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 

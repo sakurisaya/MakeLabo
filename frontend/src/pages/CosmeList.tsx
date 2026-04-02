@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Trash2, Edit, MoreVertical, Plus, Search, LayoutGrid, List } from 'lucide-react';
-import { getDefaultCosmeImage } from '../utils/imageUtils';
+import { getDefaultCosmeImage, getFullImageUrl } from '../utils/imageUtils';
 
 interface Cosmetic {
     id: number;
@@ -199,7 +199,7 @@ export const CosmeList = () => {
                                     className="aspect-square relative cursor-pointer overflow-hidden bg-white group border-[0.5px] border-slate-100"
                                 >
                                     <img
-                                        src={group.image_url || getDefaultCosmeImage(group.category)}
+                                        src={getFullImageUrl(group.image_url) || getDefaultCosmeImage(group.category)}
                                         className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
                                         alt={group.name}
                                     />
@@ -229,7 +229,7 @@ export const CosmeList = () => {
                             >
                                 <div className="aspect-[1/1] rounded-2xl overflow-hidden mb-4 bg-white relative">
                                     <img
-                                        src={group.image_url || getDefaultCosmeImage(group.category)}
+                                        src={getFullImageUrl(group.image_url) || getDefaultCosmeImage(group.category)}
                                         className="w-full h-full object-contain scale-100 transition-transform duration-500 group-hover:scale-105"
                                         alt={group.name}
                                     />

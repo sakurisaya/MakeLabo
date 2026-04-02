@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ChevronLeft, Edit2, Trash2, Info, Palette } from 'lucide-react';
-import { getDefaultCosmeImage } from '../utils/imageUtils';
+import { getDefaultCosmeImage, getFullImageUrl } from '../utils/imageUtils';
 import { PCCS_TABLE } from '../constants/pccsTable';
 
 interface Cosmetic {
@@ -156,7 +156,7 @@ export const CosmeDetail = () => {
                 <div className="relative group p-10">
                     <div className="aspect-square w-full overflow-hidden bg-white">
                         <img
-                            src={cosme.image_url || getDefaultCosmeImage(cosme.category)}
+                            src={getFullImageUrl(cosme.image_url) || getDefaultCosmeImage(cosme.category)}
                             alt={cosme.name}
                             className="w-full h-full object-contain transition-transform duration-1000 group-hover:scale-105"
                         />

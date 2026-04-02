@@ -3,7 +3,7 @@ import type { PinItem, PinCosmeticItem } from '../../types/recipe';
 import { Trash2, Plus, CheckCircle2, ChevronDown, List, Search, X, Star } from 'lucide-react';
 import axios from 'axios';
 import { INITIAL_BRANDS, LOCAL_STORAGE_BRANDS_KEY } from '../../constants/brands';
-import { getDefaultCosmeImage } from '../../utils/imageUtils';
+import { getDefaultCosmeImage, getFullImageUrl } from '../../utils/imageUtils';
 
 const CATEGORIES = ["ベース", "チーク", "コントゥアリング", "アイシャドウ", "アイライナー", "アイブロウ", "リップ", "Others"];
 
@@ -110,7 +110,7 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
             name: first.name,
             category: first.category,
             texture: first.texture,
-            imageUrl: first.image_url,
+            imageUrl: getFullImageUrl(first.image_url),
             colorNumber: first.color_number || '',
             hex: first.color_hex,
             shadeHexes: shades.slice(0, 4).map((s: any) => s.color_hex),
@@ -412,7 +412,7 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
                                         <div key={productIdx} className="bg-slate-50 border border-slate-100 rounded-2xl p-2.5 mb-1.5">
                                             {/* 商品ヘッダー（画像＋名前＋削除ボタン） */}
                                             <div className="flex items-center gap-2 mb-2">
-                                                <img src={first.image_url || getDefaultCosmeImage(first.category)} alt={first.name}
+                                                <img src={getFullImageUrl(first.image_url) || getDefaultCosmeImage(first.category)} alt={first.name}
                                                     className="w-9 h-9 rounded-lg object-cover bg-white shadow-sm flex-shrink-0" />
                                                 <div className="min-w-0 flex-1">
                                                     <div className="text-[8px] font-black text-pink-400 uppercase tracking-tighter truncate">{first.brand}</div>

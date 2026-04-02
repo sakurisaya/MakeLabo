@@ -5,7 +5,7 @@ import { ChevronLeft, Edit2, X, MessageCircle, Eye, EyeOff, ChevronDown, Chevron
 import { MakeupCanvas } from '../components/post/MakeupCanvas';
 import type { Recipe, PinItem } from '../types/recipe';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
-import { getDefaultCosmeImage } from '../utils/imageUtils';
+import { getDefaultCosmeImage, getFullImageUrl } from '../utils/imageUtils';
 
 export const RecipeDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -196,7 +196,7 @@ export const RecipeDetail = () => {
                                                 onClick={() => setExpandedItemIdx(expandedItemIdx === idx ? null : idx)}
                                             >
                                                 <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm flex-shrink-0 bg-white">
-                                                    <img src={item.imageUrl || getDefaultCosmeImage(item.category)} alt={item.name} className="w-full h-full object-contain" />
+                                                    <img src={getFullImageUrl(item.imageUrl) || getDefaultCosmeImage(item.category)} alt={item.name} className="w-full h-full object-contain" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-[8px] font-black text-pink-400 uppercase tracking-tight truncate">{item.brand}</div>
