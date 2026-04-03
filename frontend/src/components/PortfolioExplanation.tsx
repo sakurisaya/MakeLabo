@@ -16,14 +16,15 @@ export const PortfolioExplanation: React.FC = () => {
                     <div className="flex items-center gap-4">
                         <img src={logoImg} alt="MakeLabo Logo" className="h-12 object-contain" />
                         <h1 className="text-4xl lg:text-5xl font-black text-slate-600 leading-tight">
-                            Make Labo
+                            MakeLabo
                         </h1>
                     </div>
                     <span className="block text-[15px] font-bold text-slate-400 mt-2">Personal Makeup Research App</span>
                 </div>
                 <p className="text-slate-500 leading-relaxed pt-2">
-                    美容部員としての経験から生まれた、「本当に使える」メイクアップ記録・管理アプリケーション。
-                    使用したコスメ、レシピ、そして顔のパーツごとのテクニックを直感的に記録できるプラットフォームです。
+                    「あの日のメイク、どうやったっけ？」
+                    そう思ったこと、ありませんか？<br />
+                    元ヘアメイクアーティストが作った、メイク好きのための記録・管理アプリです。プロが現場でやっている"メイクをレシピ化する思考"を、毎日のメイクに取り入れてみてください。
                 </p>
             </header>
 
@@ -33,15 +34,68 @@ export const PortfolioExplanation: React.FC = () => {
             <section className="space-y-6">
                 <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
                     <Sparkles className="text-pink-400" size={24} />
-                    Concept & Design
+                    Concept
                 </h2>
-                <div className="bg-slate-50 rounded-3xl p-8 space-y-4 border border-slate-100/50">
-                    <p className="text-slate-600 leading-relaxed text-sm">
-                        「コスメ図鑑」として手持ちのアイテムを管理するだけでなく、それらをキャンバス上で「どこに・どう塗ったか」ピン留めしてレシピ化できるのが最大の特徴です。<br /><br />
-                        デザイン面では、大手コスメブランドのデジタルプラットフォームを意識。<b>清潔感のある白・ベージュを基調としたグラスモーフィズムデザイン</b>を採用し、ユーザーが毎日のメイク記録を楽しめるようなマイクロインタラクション（アニメーション）を随所に散りばめています。
-                    </p>
+                
+                <div className="space-y-4">
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-lg transition-all duration-300">
+                        <h3 className="text-base font-black text-pink-500 mb-2.5 flex items-center gap-2.5 tracking-tight">
+                            <span className="w-1.5 h-4 bg-pink-400 rounded-full" />
+                            毎日のメイクが「研究」になる
+                        </h3>
+                        <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
+                            記録を続けるうちに、自分に似合う色の組み合わせや、肌コンディション別のテクニックが自然と見えてきます。なんとなくうまくいった日も、ちゃんと再現できるように。
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-lg transition-all duration-300">
+                        <h3 className="text-base font-black text-pink-500 mb-2.5 flex items-center gap-2.5 tracking-tight">
+                            <span className="w-1.5 h-4 bg-pink-400 rounded-full" />
+                            色の感覚が、ちゃんと言葉になる
+                        </h3>
+                        <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
+                            「なんかピンクっぽい」で終わらせない。MakeLaboはPCCS体系をベースにした、感覚的にわかりやすい色の言葉で表示されます。使い続けるうちに、自然と色のトーンや特性に詳しくなれます。
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-lg transition-all duration-300">
+                        <h3 className="text-base font-black text-pink-500 mb-2.5 flex items-center gap-2.5 tracking-tight">
+                            <span className="w-1.5 h-4 bg-pink-400 rounded-full" />
+                            その日の色が、一目でわかる
+                        </h3>
+                        <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
+                            使ったコスメの色をカラーチップとしてまとめて表示。「なんかまとまりがあったな」「今日はコントラストが強かったな」が、感覚じゃなくて色として確認できます。
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-lg transition-all duration-300">
+                        <h3 className="text-base font-black text-pink-500 mb-2.5 flex items-center gap-2.5 tracking-tight">
+                            <span className="w-1.5 h-4 bg-pink-400 rounded-full" />
+                            コスメじゃなく、全身を記録できる
+                        </h3>
+                        <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
+                            服もアクセサリーもピン留めOK。その日のトータルコーデをまるごと残せるので、「あのワンピースに合わせたメイク」も迷わず引き出せます。
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-lg transition-all duration-300">
+                        <h3 className="text-base font-black text-pink-500 mb-2.5 flex items-center gap-2.5 tracking-tight">
+                            <span className="w-1.5 h-4 bg-pink-400 rounded-full" />
+                            持っているコスメを、ちゃんと把握できる
+                        </h3>
+                        <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
+                            増え続けるコスメ、把握できていますか？ブランド・カテゴリ別に整理できるので、「これ持ってたっけ？」「また同じ色買ってた」がなくなります。
+                        </p>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-pink-50 to-rose-50 rounded-3xl p-8 border border-pink-100/50 text-center !mt-8 shadow-inner">
+                        <p className="text-pink-600 font-bold text-sm md:text-base leading-relaxed tracking-wide">
+                            MakeLaboは、メイクを"なんとなく"から<br className="hidden md:block" />"わかって楽しむ"に変えるアプリです。
+                        </p>
+                    </div>
                 </div>
             </section>
+
 
             {/* 技術スタック */}
             <section className="space-y-6">
