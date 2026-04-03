@@ -42,11 +42,11 @@ export const PortfolioExplanation: React.FC = () => {
                     <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-lg transition-all duration-300">
                         <h3 className="text-base font-black text-pink-500 mb-2.5 flex items-center gap-2.5 tracking-tight">
                             <span className="w-1.5 h-4 bg-pink-400 rounded-full" />
-                            毎日のメイクが「研究」になる
+                            毎日のメイクが「研究データ」に
                         </h3>
                         <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
-                            記録を続けるうちに、自分に似合う色の組み合わせや、肌コンディション別のテクニックが自然と見えてきます。<br />
-                            なんとなくうまくいった日も、ちゃんと再現できるように。
+                            記録を続けるうちに、自分に似合う色の組み合わせや、コンディション別の最適アイテムが自然と見えてきます。<br />
+                            なんとなくうまくいった日も、褒められた日も、ちゃんと再現できるように。
                         </p>
                     </div>
 
@@ -56,7 +56,7 @@ export const PortfolioExplanation: React.FC = () => {
                             色の感覚が、ちゃんと言葉になる
                         </h3>
                         <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
-                            「なんかピンクっぽい」で終わらせない。MakeLaboはPCCS体系をベースにした、感覚的にわかりやすい色の言葉で表示されます。<br />
+                            「なんか青みっぽい」で終わらせない。<br />MakeLaboはPCCS体系をベースにした、感覚的にわかりやすい色の言葉で表示されます。<br />
                             使い続けるうちに、自然と色のトーンや特性に詳しくなれます。
                         </p>
                     </div>
@@ -89,8 +89,8 @@ export const PortfolioExplanation: React.FC = () => {
                             持っているコスメを、ちゃんと把握できる
                         </h3>
                         <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
-                            増え続けるコスメ、把握できていますか？<br />
-                            ブランド・カテゴリ別に整理できるので、「これ持ってたっけ？」「また同じ色買ってた」がなくなります。
+                            増え続けるコスメ、全部把握できていますか？<br />
+                            カテゴリ別に整理できるのはもちろん、所有コスメの色の傾向もカラーチップ表示で一目瞭然。<br />「私、ピンク系ばっかり持ってるな」「オレンジ系が意外と少ない」が、感覚じゃなくてデータでわかります。次に買うべきアイテムを、なんとなくじゃなく根拠を持って選べるように。
                         </p>
                     </div>
 
