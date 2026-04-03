@@ -125,23 +125,23 @@ export const CosmeList = () => {
     }
 
     return (
-        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-4xl p-4 md:p-6'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-md p-4'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
             <header className={`mb-8 ${viewMode === 'tile' ? 'p-4 pb-0' : ''}`}>
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-3">
-                        <img src={logoImg} alt="logo" className="w-6 md:w-8 object-contain" />
+                    <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                        <img src={logoImg} alt="logo" className="w-6 object-contain" />
                         My Cosmetics
                     </h2>
-                    <div className="flex bg-slate-100/80 p-0.5 md:p-1 rounded-xl shadow-inner">
+                    <div className="flex bg-slate-100/80 p-0.5 rounded-xl shadow-inner">
                         <button 
                             onClick={() => setViewMode('card')} 
-                            className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`p-1.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <List size={18} />
                         </button>
                         <button 
                             onClick={() => setViewMode('tile')} 
-                            className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                            className={`p-1.5 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <LayoutGrid size={18} />
                         </button>

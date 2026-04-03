@@ -60,7 +60,7 @@ const AppContent = () => {
       
       {/* 左側: アプリ領域 (スマホサイズのモック部分) */}
       {/* 960px以上(lg)の時に左右分割を適応 */}
-      <div className="lg:w-1/2 lg:h-screen lg:flex lg:items-center lg:justify-center relative" style={{ backgroundImage: 'linear-gradient(283deg, rgb(233 233 233), rgb(255, 255, 255) 51%);'}}>
+      <div className="lg:w-1/2 lg:h-screen lg:flex lg:items-center lg:justify-center relative" style={{ backgroundImage: 'linear-gradient(283deg, rgb(233, 233, 233), rgb(255, 255, 255) 51%)' }}>
          {/* iPhone風フレーム */}
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
@@ -75,7 +75,7 @@ const AppContent = () => {
               <ScrollToTop />
               
               {/* アプリのメインコンテンツ（スクロール可能エリア） */}
-              <main className="flex-1 w-full bg-white relative pb-20 overflow-y-auto overflow-x-hidden hide-scrollbar">
+              <main id="main-scroll-container" className="flex-1 w-full bg-white relative pb-20 overflow-y-auto overflow-x-hidden hide-scrollbar">
                 <Routes>
                   <Route path="/" element={<History onNavigateToPost={(data) => navigate("/post", { state: { initialData: data } })} />} />
                   <Route path="/recipe/:id" element={<RecipeDetail />} />
@@ -83,6 +83,7 @@ const AppContent = () => {
                   <Route path="/cosme/new" element={<CosmeRegister />} />
                   <Route path="/cosme/:id" element={<CosmeDetail />} />
                   <Route path="/post" element={<PostPage onBack={() => navigate("/")} />} />
+                  <Route path="/readme" element={<PortfolioExplanation onBack={() => navigate(-1)} />} />
                 </Routes>
               </main>
 

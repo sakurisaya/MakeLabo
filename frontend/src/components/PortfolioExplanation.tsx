@@ -1,10 +1,25 @@
 import React from 'react';
-import { Sparkles, Database, Server, Component, Smartphone } from 'lucide-react';
+import { Sparkles, Database, Server, Component, Smartphone, ChevronLeft } from 'lucide-react';
 import logoImg from '../assets/images/logo01.webp';
 
-export const PortfolioExplanation: React.FC = () => {
+interface Props {
+    onBack?: () => void;
+}
+
+export const PortfolioExplanation: React.FC<Props> = ({ onBack }) => {
     return (
-        <div className="p-12 lg:p-16 max-w-2xl mx-auto space-y-12 animate-in fade-in duration-1000">
+        <div className="p-8 md:p-12 lg:p-16 max-w-2xl mx-auto space-y-12 animate-in fade-in duration-1000 bg-white min-h-screen">
+            {/* モバイル用戻るボタン */}
+            {onBack && (
+                <button 
+                    onClick={onBack}
+                    className="lg:hidden flex items-center gap-2 text-slate-500 font-bold mb-4 hover:text-slate-800 transition-colors"
+                >
+                    <ChevronLeft size={20} />
+                    <span>Back to App</span>
+                </button>
+            )}
+
             {/* ヘッダーエリア */}
             <header className="space-y-6">
                 <div className="flex flex-col items-start gap-4">
@@ -24,8 +39,9 @@ export const PortfolioExplanation: React.FC = () => {
                 <p className="text-slate-500 leading-relaxed pt-2">
                     「あの日のメイク、どうやったっけ？」<br /><br />
                     そう思ったこと、ありませんか？<br />
-                    元ヘアメイクアーティストが作った、メイク好きのための記録・管理アプリです。<br />
-                    プロが現場でやっている"メイクをレシピ化する思考"を、毎日のメイクに取り入れてみてください。
+                    元ヘアメイクアーティストが作った、メイク好きのための記録・管理アプリです。<br /><br />
+                    '美しい' には理由がある。<br /><br />
+                    「メイクをレシピ化する思考」を、毎日のメイクに取り入れてみてください。
                 </p>
             </header>
 
@@ -90,7 +106,7 @@ export const PortfolioExplanation: React.FC = () => {
                         </h3>
                         <p className="text-slate-500 leading-relaxed text-[13px] pl-4">
                             増え続けるコスメ、全部把握できていますか？<br />
-                            カテゴリ別に整理できるのはもちろん、所有コスメの色の傾向もカラーチップ表示で一目瞭然。<br />「私、ピンク系ばっかり持ってるな」「オレンジ系が意外と少ない」が、感覚じゃなくてデータでわかります。次に買うべきアイテムを、なんとなくじゃなく根拠を持って選べるように。
+                            カテゴリ別に整理できるのはもちろん、所有コスメの色の傾向もカラーチップ表示で一目瞭然。<br />「私、ピンク系ばっかり持ってるな」「オレンジ系が意外と少ない」etc...<br />感覚じゃなくてデータでわかります。次に買うべきアイテムを、なんとなくじゃなく根拠を持って選べるように。
                         </p>
                     </div>
 

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import type { Recipe } from '../types/recipe';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
-import { Copy, Trash2, Edit, Share2, MoreVertical, X, LayoutGrid, List } from 'lucide-react';
+import { Copy, Trash2, Edit, Share2, MoreVertical, X, LayoutGrid, List, FileText } from 'lucide-react';
 import logoImg from '../assets/images/logo01.webp';
 
 interface Props {
@@ -23,6 +23,22 @@ export const History = ({ onNavigateToPost }: Props) => {
     }, [viewMode]);
 
     const [longPressedRecipe, setLongPressedRecipe] = useState<Recipe | null>(null);
+    const [showReadmeBtn, setShowReadmeBtn] = useState(false);
+
+    useEffect(() => {
+        const scrollContainer = document.getElementById('main-scroll-container');
+        if (!scrollContainer) return;
+
+        const handleScroll = () => {
+            setShowReadmeBtn(scrollContainer.scrollTop > 100);
+        };
+
+        scrollContainer.addEventListener('scroll', handleScroll);
+        // 初期状態のチェック
+        handleScroll();
+        return () => scrollContainer.removeEventListener('scroll', handleScroll);
+    }, []);
+
     const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
     const longPressTimer = useRef<any | null>(null);
 
@@ -228,24 +244,24 @@ export const History = ({ onNavigateToPost }: Props) => {
     };
 
     return (
-        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-4xl p-4 md:p-6'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-md p-4'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
             <div className={`flex items-center justify-between ${viewMode === 'tile' ? 'p-4 pb-2' : 'mb-8'}`}>
-                <h2 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-3">
-                    <img src={logoImg} alt="logo" className="w-6 md:w-8 object-contain" />
+                <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
+                    <img src={logoImg} alt="logo" className="w-6 object-contain" />
                     Makeup Recipes
                 </h2>
                 
-                <div className="flex bg-slate-100/80 p-0.5 md:p-1 rounded-xl shadow-inner mb-2 md:mb-0">
+                <div className="flex bg-slate-100/80 p-0.5 rounded-xl shadow-inner mb-2">
                     <button 
                         onClick={() => setViewMode('card')} 
-                        className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`p-1.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
                         aria-label="カード表示"
                     >
                         <List size={18} />
                     </button>
                     <button 
                         onClick={() => setViewMode('tile')} 
-                        className={`p-1.5 md:p-2 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`p-1.5 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
                         aria-label="タイル表示"
                     >
                         <LayoutGrid size={18} />
@@ -426,6 +442,17 @@ export const History = ({ onNavigateToPost }: Props) => {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {/* Readmeボタン (モバイル環境でスクロール時に表示) */}
+            {showReadmeBtn && (
+                <button
+                    onClick={() => navigate('/readme')}
+                    className="fixed bottom-36 right-8 lg:hidden bg-slate-800 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 text-sm font-bold animate-in fade-in slide-in-from-bottom-4 duration-300 z-40 hover:scale-105 active:scale-95"
+                >
+                    <FileText size={18} />
+                    About App
+                </button>
             )}
 
             <button
