@@ -65,7 +65,7 @@ const AppContent = () => {
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
              className="w-full min-h-screen bg-white shadow-xl 
-                        lg:min-h-0 lg:w-[390px] lg:h-[844px] lg:rounded-[48px] lg:border-[12px] lg:border-slate-800 
+                        lg:min-h-0 lg:w-[390px] lg:h-[97vh] lg:rounded-[48px] lg:border-[12px] lg:border-slate-800 
                         lg:shadow-2xl lg:overflow-hidden relative flex flex-col"
              style={{ transform: 'translateZ(0)' }}
          >

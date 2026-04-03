@@ -252,7 +252,7 @@ export const History = ({ onNavigateToPost }: Props) => {
                 </div>
             </div>
 
-            <div className={`grid ${viewMode === 'tile' ? 'grid-cols-3 md:grid-cols-5 gap-0' : 'grid-cols-1 gap-6'}`}>
+            <div className={`grid ${viewMode === 'tile' ? 'grid-cols-3 gap-0' : 'grid-cols-1 gap-6'}`}>
                 {recipes.map((recipe) => {
                     const thumbnailSlide = recipe.slides.find(s => s.isThumbnail) || recipe.slides[0];
                     const displayImage = thumbnailSlide?.image || DEFAULT_FACE_IMAGE;

@@ -186,7 +186,7 @@ export const CosmeList = () => {
                     <p className="text-slate-300 font-black text-sm uppercase tracking-widest">No Items Found</p>
                 </div>
             ) : (
-                <div className={`grid ${viewMode === 'tile' ? 'grid-cols-3 md:grid-cols-5 gap-0' : 'grid-cols-2 gap-5'}`}>
+                <div className={`grid ${viewMode === 'tile' ? 'grid-cols-3 gap-0' : 'grid-cols-2 gap-5'}`}>
                     {filteredGroups.map((group) => {
                         const mainVariant = group.variants[0]; // 代表アイテム
                         
