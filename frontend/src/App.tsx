@@ -65,12 +65,12 @@ const AppContent = () => {
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
              className="w-full min-h-screen bg-white shadow-xl 
-                        lg:min-h-0 lg:w-[390px] lg:h-[97vh] lg:rounded-[48px] lg:border-[12px] lg:border-slate-800 
+                        lg:min-h-0 lg:w-[390px] lg:h-[97vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-600 
                         lg:shadow-2xl lg:overflow-hidden relative flex flex-col"
              style={{ transform: 'translateZ(0)' }}
          >
               {/* iPhone ノッチ（モック用デコレーション） */}
-              <div className="hidden lg:block absolute top-0 inset-x-0 h-6 bg-slate-800 rounded-b-3xl w-40 mx-auto z-[120]"></div>
+              <div className="hidden lg:block absolute top-0 inset-x-0 h-4 bg-slate-600 rounded-b-3xl w-40 mx-auto z-[120]"></div>
 
               <ScrollToTop />
               
