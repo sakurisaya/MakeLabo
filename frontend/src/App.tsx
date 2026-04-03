@@ -60,7 +60,7 @@ const AppContent = () => {
       
       {/* 左側: アプリ領域 (スマホサイズのモック部分) */}
       {/* 960px以上(lg)の時に左右分割を適応 */}
-      <div className="lg:w-1/2 lg:h-screen lg:flex lg:items-center lg:justify-center relative">
+      <div className="lg:w-1/2 lg:h-screen lg:flex lg:items-center lg:justify-center relative" style={{ backgroundImage: 'linear-gradient(283deg, rgb(233 233 233), rgb(255, 255, 255) 51%);'}}>
          {/* iPhone風フレーム */}
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
