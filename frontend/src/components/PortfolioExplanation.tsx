@@ -95,7 +95,7 @@ export const PortfolioExplanation: React.FC = () => {
                     </div>
 
                     <div className="p-8 text-center">
-                        <p className="text-pink-500 text-md md:text-base leading-relaxed tracking-wide">
+                        <p className="text-pink-500 text-lg font-bold md:text-base leading-relaxed tracking-wide">
                             MakeLaboは、メイクを"なんとなく"から<br className="hidden md:block" />"わかって楽しむ"に変えるアプリです。
                         </p>
                     </div>
