@@ -125,7 +125,7 @@ export const CosmeList = () => {
     }
 
     return (
-        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-md p-4'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'p-4'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
             <header className={`mb-8 ${viewMode === 'tile' ? 'p-4 pb-0' : ''}`}>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">

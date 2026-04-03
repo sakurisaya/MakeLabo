@@ -64,9 +64,9 @@ const AppContent = () => {
          {/* iPhone風フレーム */}
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
-             className="w-full min-h-screen bg-white shadow-xl 
-                        lg:min-h-0 lg:w-[390px] lg:h-[98vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-700 
-                        lg:shadow-2xl lg:overflow-hidden relative flex flex-col"
+             className="w-full h-[100dvh] overflow-hidden bg-white shadow-xl 
+                        lg:w-[390px] lg:h-[98vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-700 
+                        lg:shadow-2xl relative flex flex-col"
              style={{ transform: 'translateZ(0)' }}
          >
               {/* iPhone ノッチ（モック用デコレーション） */}

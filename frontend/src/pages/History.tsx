@@ -228,7 +228,7 @@ export const History = ({ onNavigateToPost }: Props) => {
     };
 
     return (
-        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-md p-4'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+        <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'p-4'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
             <div className={`flex items-center justify-between ${viewMode === 'tile' ? 'p-4 pb-2' : 'mb-8'}`}>
                 <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
                     <img src={logoImg} alt="logo" className="w-6 object-contain" />
