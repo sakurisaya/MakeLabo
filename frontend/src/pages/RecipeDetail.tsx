@@ -129,7 +129,7 @@ export const RecipeDetail = () => {
     };
 
     return (
-        <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20 font-sans relative">
+        <div className="mx-auto min-h-screen bg-slate-50 pb-20 font-sans relative">
             {/* ヘッダー */}
             <div className="bg-white/80 backdrop-blur-md px-6 py-4 shadow-sm flex items-center justify-between sticky top-0 z-30">
                 <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-400">

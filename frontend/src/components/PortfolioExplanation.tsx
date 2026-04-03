@@ -112,7 +112,7 @@ export const PortfolioExplanation: React.FC<Props> = ({ onBack }) => {
 
                     <div className="p-8 text-center">
                         <p className="text-pink-500 text-lg font-bold md:text-base leading-relaxed tracking-wide">
-                            MakeLaboは、メイクを"なんとなく"から<br className="hidden md:block" />"わかって楽しむ"に変えるアプリです。
+                            MakeLaboは、メイクを"なんとなく"から<br />"わかって楽しむ"に変えるアプリです。
                         </p>
                     </div>
                 </div>

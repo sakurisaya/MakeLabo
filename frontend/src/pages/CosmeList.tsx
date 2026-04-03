@@ -322,7 +322,7 @@ export const CosmeList = () => {
 
             <button
                 onClick={() => navigate("/cosme/new")}
-                className="fixed bottom-20 right-8 w-16 h-auto aspect-square bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl hover:bg-pink-500 hover:scale-110 active:scale-95 transition-all z-40 group"
+                className="fixed bottom-[68px] right-6 w-14 h-auto aspect-square bg-slate-900 text-white rounded-full shadow-[0_8px_30px_rgb(15,23,42,0.4)] flex items-center justify-center text-3xl hover:bg-pink-500 hover:scale-110 active:scale-95 transition-all z-40 group"
             >
                 <Plus size={32} className="transition-transform duration-300 group-hover:rotate-90" />
             </button>

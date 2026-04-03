@@ -412,9 +412,9 @@ const CosmeRegister: React.FC = () => {
 
     // --- 5. 画面表示 (JSX) ---
     return (
-        <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-10 font-sans relative">
+        <div className="mx-auto min-h-screen bg-slate-50 pb-10 font-sans relative">
             {/* ヘッダー (Fixed Save Button) */}
-            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white/80 backdrop-blur px-4 py-3 shadow-sm flex items-center justify-between z-50 border-b border-slate-100">
+            <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full bg-white/80 backdrop-blur px-4 py-3 shadow-sm flex items-center justify-between z-50 border-b border-slate-100">
                 <button onClick={() => navigate(returnPath || -1 as any)} className="p-2 -ml-2 text-slate-400 hover:text-pink-500">
                     <ChevronLeft size={24} />
                 </button>

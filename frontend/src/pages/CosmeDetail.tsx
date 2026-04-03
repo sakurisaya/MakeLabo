@@ -131,7 +131,7 @@ export const CosmeDetail = () => {
     }
 
     return (
-        <div className="max-w-md mx-auto min-h-screen bg-white pb-10 font-sans relative">
+        <div className="mx-auto min-h-screen bg-white pb-10 font-sans relative">
             {/* ヘッダー */}
             <div className="bg-white/80 backdrop-blur-md px-4 py-3 border-b border-slate-50 flex items-center justify-between sticky top-0 z-30">
                 <button onClick={() => navigate('/cosme')} className="p-2 text-slate-400 hover:text-pink-500 transition-colors">

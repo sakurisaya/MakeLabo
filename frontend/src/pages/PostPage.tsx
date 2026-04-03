@@ -207,7 +207,7 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
     const currentSlide = slides[activeSlideIndex];
 
     return (
-        <div className="max-w-md mx-auto min-h-screen bg-slate-50 pb-20 font-sans shadow-xl relative overflow-x-hidden">
+        <div className="mx-auto min-h-screen bg-slate-50 pb-20 font-sans shadow-xl relative overflow-x-hidden">
             {/* ヘッダー */}
             <div className="bg-white/80 backdrop-blur-md px-6 py-4 shadow-sm flex items-center justify-between sticky top-0 z-30">
                 <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-pink-500 transition-colors">

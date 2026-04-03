@@ -23,22 +23,6 @@ export const History = ({ onNavigateToPost }: Props) => {
     }, [viewMode]);
 
     const [longPressedRecipe, setLongPressedRecipe] = useState<Recipe | null>(null);
-    const [showReadmeBtn, setShowReadmeBtn] = useState(false);
-
-    useEffect(() => {
-        const scrollContainer = document.getElementById('main-scroll-container');
-        if (!scrollContainer) return;
-
-        const handleScroll = () => {
-            setShowReadmeBtn(scrollContainer.scrollTop > 100);
-        };
-
-        scrollContainer.addEventListener('scroll', handleScroll);
-        // 初期状態のチェック
-        handleScroll();
-        return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    }, []);
-
     const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
     const longPressTimer = useRef<any | null>(null);
 
@@ -444,20 +428,19 @@ export const History = ({ onNavigateToPost }: Props) => {
                 </div>
             )}
 
-            {/* Readmeボタン (モバイル環境でスクロール時に表示) */}
-            {showReadmeBtn && (
-                <button
-                    onClick={() => navigate('/readme')}
-                    className="fixed bottom-36 right-8 lg:hidden bg-slate-800 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 text-sm font-bold animate-in fade-in slide-in-from-bottom-4 duration-300 z-40 hover:scale-105 active:scale-95"
-                >
-                    <FileText size={18} />
-                    About App
-                </button>
-            )}
+            {/* Readmeボタン (モバイル環境で常に表示) */}
+            <button
+                onClick={() => navigate('/readme')}
+                className="fixed bottom-[140px] right-6 lg:hidden bg-slate-800 text-white px-4 py-3 rounded-full shadow-2xl flex items-center gap-2 text-sm font-bold z-40 hover:scale-105 active:scale-95 transition-transform"
+            >
+                <FileText size={18} />
+                About App
+            </button>
 
+            {/* 新規作成ボタン */}
             <button
                 onClick={() => onNavigateToPost()}
-                className="fixed bottom-18 right-8 w-16 h-auto aspect-square bg-pink-500 text-white rounded-full shadow-2xl shadow-pink-200 flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"
+                className="fixed bottom-[68px] right-6 w-14 h-auto aspect-square bg-pink-500 text-white rounded-full shadow-[0_8px_30px_rgb(236,72,153,0.4)] flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"
             >
                 <span className="transition-transform duration-300 group-hover:rotate-90">＋</span>
             </button>
