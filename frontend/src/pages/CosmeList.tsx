@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Trash2, Edit, MoreVertical, Plus, Search, LayoutGrid, List } from 'lucide-react';
 import { getDefaultCosmeImage, getFullImageUrl } from '../utils/imageUtils';
+import logoImg from '../assets/images/logo01.webp';
 
 interface Cosmetic {
     id: number;
@@ -128,7 +129,7 @@ export const CosmeList = () => {
             <header className={`mb-8 ${viewMode === 'tile' ? 'p-4 pb-0' : ''}`}>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-3">
-                        <span className="w-2 h-6 md:h-8 bg-pink-500 rounded-full"></span>
+                        <img src={logoImg} alt="logo" className="w-6 md:w-8 object-contain" />
                         My Cosmetics
                     </h2>
                     <div className="flex bg-slate-100/80 p-0.5 md:p-1 rounded-xl shadow-inner">
@@ -321,7 +322,7 @@ export const CosmeList = () => {
 
             <button
                 onClick={() => navigate("/cosme/new")}
-                className="fixed bottom-20 right-8 w-16 h-16 bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl hover:bg-pink-500 hover:scale-110 active:scale-95 transition-all z-40 group"
+                className="fixed bottom-20 right-8 w-16 h-auto aspect-square bg-slate-900 text-white rounded-full shadow-2xl flex items-center justify-center text-3xl hover:bg-pink-500 hover:scale-110 active:scale-95 transition-all z-40 group"
             >
                 <Plus size={32} className="transition-transform duration-300 group-hover:rotate-90" />
             </button>

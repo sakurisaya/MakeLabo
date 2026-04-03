@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Recipe } from '../types/recipe';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
 import { Copy, Trash2, Edit, Share2, MoreVertical, X, LayoutGrid, List } from 'lucide-react';
+import logoImg from '../assets/images/logo01.webp';
 
 interface Props {
     onNavigateToPost: (recipeToEdit?: Recipe) => void;
@@ -230,7 +231,7 @@ export const History = ({ onNavigateToPost }: Props) => {
         <div className={`mx-auto ${viewMode === 'tile' ? 'w-full max-w-none' : 'max-w-4xl p-4 md:p-6'} animate-in fade-in slide-in-from-bottom-4 duration-500`}>
             <div className={`flex items-center justify-between ${viewMode === 'tile' ? 'p-4 pb-2' : 'mb-8'}`}>
                 <h2 className="text-xl md:text-2xl font-black text-slate-800 flex items-center gap-3">
-                    <span className="w-2 h-6 md:h-8 bg-pink-500 rounded-full"></span>
+                    <img src={logoImg} alt="logo" className="w-6 md:w-8 object-contain" />
                     Makeup Recipes
                 </h2>
                 
@@ -429,7 +430,7 @@ export const History = ({ onNavigateToPost }: Props) => {
 
             <button
                 onClick={() => onNavigateToPost()}
-                className="fixed bottom-18 right-8 w-16 h-16 bg-pink-500 text-white rounded-full shadow-2xl shadow-pink-200 flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"
+                className="fixed bottom-18 right-8 w-16 h-auto aspect-square bg-pink-500 text-white rounded-full shadow-2xl shadow-pink-200 flex items-center justify-center text-3xl hover:bg-pink-600 hover:scale-110 active:scale-95 transition-all z-40 group"
             >
                 <span className="transition-transform duration-300 group-hover:rotate-90">＋</span>
             </button>

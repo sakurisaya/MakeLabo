@@ -13,10 +13,10 @@ export const PortfolioExplanation: React.FC = () => {
                     </span>
                 </div>
                 <div>
-                    <div className="flex items-center gap-2">
-                        <img src={logoImg} alt="MakeLabo Logo" className="h-16 object-contain" />
-                        <h1 className="text-4xl lg:text-5xl font-black text-slate-600 tracking-tight leading-tight">
-                            MakeLabo
+                    <div className="flex items-center gap-4">
+                        <img src={logoImg} alt="MakeLabo Logo" className="h-12 object-contain" />
+                        <h1 className="text-4xl lg:text-5xl font-black text-slate-600 leading-tight">
+                            Make Labo
                         </h1>
                     </div>
                     <span className="block text-[15px] font-bold text-slate-400 mt-2">Personal Makeup Research App</span>
