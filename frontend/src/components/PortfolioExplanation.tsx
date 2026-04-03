@@ -11,10 +11,10 @@ export const PortfolioExplanation: React.FC = () => {
                     <span className="px-3 py-1 bg-pink-50 text-pink-500 font-bold tracking-widest text-[10px] rounded-full uppercase">
                         Portfolio Project
                     </span>
-                    <img src={logoImg} alt="MakeLabo Logo" className="h-16 object-contain" />
                 </div>
-                <div>
-                    <h1 className="text-4xl lg:text-5xl font-black text-slate-800 tracking-tight leading-tight hidden">
+                <div className="flex items-center gap-2">
+                    <img src={logoImg} alt="MakeLabo Logo" className="h-16 object-contain" />
+                    <h1 className="text-4xl lg:text-5xl font-black text-slate-700 tracking-tight leading-tight">
                         MakeLabo
                     </h1>
                     <span className="block text-xl font-bold text-slate-400 mt-2">Personal Makeup Research App</span>

@@ -65,7 +65,7 @@ const AppContent = () => {
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
              className="w-full min-h-screen bg-white shadow-xl 
-                        lg:min-h-0 lg:w-[390px] lg:h-[97vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-600 
+                        lg:min-h-0 lg:w-[390px] lg:h-[98vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-600 
                         lg:shadow-2xl lg:overflow-hidden relative flex flex-col"
              style={{ transform: 'translateZ(0)' }}
          >
@@ -92,7 +92,7 @@ const AppContent = () => {
       </div>
 
       {/* 右側: 解説領域（PCのみ表示） */}
-      <div className="hidden lg:block lg:w-1/2 lg:h-screen lg:overflow-y-auto bg-white border-l border-slate-100/50 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]">
+      <div className="hidden lg:block lg:w-1/2 lg:h-screen lg:overflow-y-auto bg-white border-l border-slate-100/50 shadow-[-10px_0_30px_rgba(0,0,0,0.02)]" style={{ backgroundImage: 'linear-gradient(90deg, #faf9f88a, #ffffff 51%)' }}>
         <PortfolioExplanation />
       </div>
 
