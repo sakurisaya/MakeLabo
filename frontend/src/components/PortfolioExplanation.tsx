@@ -12,12 +12,14 @@ export const PortfolioExplanation: React.FC = () => {
                         Portfolio Project
                     </span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <img src={logoImg} alt="MakeLabo Logo" className="h-16 object-contain" />
-                    <h1 className="text-4xl lg:text-5xl font-black text-slate-700 tracking-tight leading-tight">
-                        MakeLabo
-                    </h1>
-                    <span className="block text-xl font-bold text-slate-400 mt-2">Personal Makeup Research App</span>
+                <div>
+                    <div className="flex items-center gap-2">
+                        <img src={logoImg} alt="MakeLabo Logo" className="h-16 object-contain" />
+                        <h1 className="text-4xl lg:text-5xl font-black text-slate-600 tracking-tight leading-tight">
+                            MakeLabo
+                        </h1>
+                    </div>
+                    <span className="block text-[15px] font-bold text-slate-400 mt-2">Personal Makeup Research App</span>
                 </div>
                 <p className="text-slate-500 leading-relaxed pt-2">
                     美容部員としての経験から生まれた、「本当に使える」メイクアップ記録・管理アプリケーション。
