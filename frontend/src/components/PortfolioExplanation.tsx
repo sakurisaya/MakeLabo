@@ -1,21 +1,25 @@
 import React from 'react';
-import { Sparkles, Palette, Database, Server, Component, Smartphone } from 'lucide-react';
+import { Sparkles, Database, Server, Component, Smartphone } from 'lucide-react';
+import logoImg from '../assets/images/logo01.webp';
 
 export const PortfolioExplanation: React.FC = () => {
     return (
         <div className="p-12 lg:p-16 max-w-2xl mx-auto space-y-12 animate-in fade-in duration-1000">
             {/* ヘッダーエリア */}
-            <header className="space-y-4">
-                <div className="flex items-center gap-3 mb-2">
+            <header className="space-y-6">
+                <div className="flex flex-col items-start gap-4">
                     <span className="px-3 py-1 bg-pink-50 text-pink-500 font-bold tracking-widest text-[10px] rounded-full uppercase">
                         Portfolio Project
                     </span>
+                    <img src={logoImg} alt="MakeLabo Logo" className="h-16 object-contain" />
                 </div>
-                <h1 className="text-4xl lg:text-5xl font-black text-slate-800 tracking-tight leading-tight">
-                    MakeLabo
+                <div>
+                    <h1 className="text-4xl lg:text-5xl font-black text-slate-800 tracking-tight leading-tight hidden">
+                        MakeLabo
+                    </h1>
                     <span className="block text-xl font-bold text-slate-400 mt-2">Personal Makeup Research App</span>
-                </h1>
-                <p className="text-slate-500 leading-relaxed pt-4">
+                </div>
+                <p className="text-slate-500 leading-relaxed pt-2">
                     美容部員としての経験から生まれた、「本当に使える」メイクアップ記録・管理アプリケーション。
                     使用したコスメ、レシピ、そして顔のパーツごとのテクニックを直感的に記録できるプラットフォームです。
                 </p>
