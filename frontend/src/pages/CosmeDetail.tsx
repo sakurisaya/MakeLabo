@@ -226,9 +226,6 @@ export const CosmeDetail = () => {
                                     </div>
 
                                     <div className="flex-1 min-w-0 space-y-0.5">
-                                        {variation.color_number && (
-                                            <p className="text-xs font-bold text-slate-800 truncate">{variation.color_number}</p>
-                                        )}
                                         {/* 行1: トーン名(英語) */}
                                         <p className="text-[10px] font-bold text-slate-400">
                                             {variation.pccs_hue === 0
@@ -243,7 +240,7 @@ export const CosmeDetail = () => {
                                                 : `${TONE_JP_ADJECTIVE[variation.pccs_tone]}${HUE_NAMES[variation.pccs_hue]}`
                                             }
                                         </p>
-                                        {/* 行3: pccsTable色名（有彩色のみ） */}
+                                        {/* 行3: pccsTable色名（有彩色かつ名前がある場合のみ） */}
                                         {variation.pccs_hue !== 0 && getPccsColorNames(variation.pccs_tone, variation.pccs_hue) && (
                                             <p className="text-xs font-bold text-pink-500 truncate">
                                                 {getPccsColorNames(variation.pccs_tone, variation.pccs_hue)}
