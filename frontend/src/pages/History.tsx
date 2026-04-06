@@ -305,9 +305,9 @@ export const History = ({ onNavigateToPost }: Props) => {
                             onMouseLeave={handleTouchEnd}
                             onTouchStart={(e) => handleTouchStart(recipe, e)}
                             onTouchEnd={handleTouchEnd}
-                            className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer border border-slate-100 flex h-40 md:h-48 group relative ${longPressedRecipe?.id === recipe.id ? 'ring-4 ring-pink-500/20' : ''}`}
+                            className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer border border-slate-100 flex h-40 group relative ${longPressedRecipe?.id === recipe.id ? 'ring-4 ring-pink-500/20' : ''}`}
                         >
-                            <div className="w-32 md:w-40 h-full flex-shrink-0 relative overflow-hidden">
+                            <div className="w-32 h-full flex-shrink-0 relative overflow-hidden">
                                 <img
                                     src={displayImage}
                                     alt={recipe.overallData?.title}
@@ -316,9 +316,9 @@ export const History = ({ onNavigateToPost }: Props) => {
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             </div>
 
-                            <div className="flex-1 p-4 md:p-6 flex flex-col justify-between">
+                            <div className="flex-1 p-4 flex flex-col justify-between">
                                 <div>
-                                    <h3 className="text-lg md:text-xl font-bold text-slate-800 line-clamp-1 group-hover:text-pink-600 transition-colors">
+                                    <h3 className="text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-pink-600 transition-colors">
                                         {recipe.overallData?.title || "無題のレシピ"}
                                     </h3>
 

@@ -13,8 +13,13 @@ import { PortfolioExplanation } from './components/PortfolioExplanation';
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => { 
-      // PCレイアウトの場合、右半分のscroll領域もトップに戻したい場合は考慮が必要だが
-      // まずは画面全体のスクロールに影響させる
+      // アプリメイン領域（画面内のスクロールコンテナ）のスクロールをトップに戻す
+      const scrollContainer = document.getElementById('main-scroll-container');
+      if (scrollContainer) {
+          scrollContainer.scrollTo(0, 0);
+      }
+      
+      // PC版の右側スクロール領域など、他の部分のためにもウィンドウ全体をリセット
       window.scrollTo(0, 0); 
   }, [pathname]);
   return null;
