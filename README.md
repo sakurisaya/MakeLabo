@@ -8,16 +8,16 @@
 
 ---
 
-##  UI プレビュー
+## UI プレビュー
 
-| トップ |
-|--------|
-| ![top](./screenshots/top.png) |
+![トップ画面](./screenshots/top.png)
+
 | メイクレシピ詳細 | メイクレシピ追加 | コスメ管理 |
-|--------|-----------|-----------|
+|:-:|:-:|:-:|
 | ![recipe](./screenshots/recipe.png) | ![add_recipe](./screenshots/add_recipe.png) | ![cosme](./screenshots/cosme.png) |
 
 ---
+
 
 ##  主な機能
 
