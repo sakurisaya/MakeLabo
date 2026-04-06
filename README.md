@@ -4,15 +4,18 @@
 「なんとなく」になりがちな毎日のメイクを詳細にレシピ化し、再現性と色彩感覚を高めるためのプラットフォームです。
 
 🔗 **[アプリを見る](https://main.d2jqhenkd2g20n.amplifyapp.com/)**  
-※ ゲストユーザー（テストアカウント）でログイン可能です。
+※ ご確認いただきやすいよう、**ユーザー登録・ログイン不要ですぐに全機能をお試しいただける**ゲストモード（共通テストアカウントへの自動接続）として公開しています。
 
 ---
 
-##  スクリーンショット
+##  UI プレビュー
 
-| トップ | メイク記録 | コスメ管理 |
+| トップ |
+|--------|
+| ![top](./screenshots/top.png) |
+| メイクレシピ詳細 | メイクレシピ追加 | コスメ管理 |
 |--------|-----------|-----------|
-| ![top](./screenshots/top.png) | ![recipe](./screenshots/recipe.png) | ![add_recipe](./screenshots/add_recipe.png) | ![cosme](./screenshots/cosme.png) |
+| ![recipe](./screenshots/recipe.png) | ![add_recipe](./screenshots/add_recipe.png) | ![cosme](./screenshots/cosme.png) |
 
 ---
 
