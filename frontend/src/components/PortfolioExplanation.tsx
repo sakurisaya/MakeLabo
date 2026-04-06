@@ -37,8 +37,8 @@ export const PortfolioExplanation: React.FC<Props> = ({ onBack }) => {
                     <span className="block text-[15px] font-bold text-slate-400 mt-2">Personal Makeup Research App</span>
                 </div>
                 <p className="text-slate-500 leading-relaxed pt-2">
-                    「あの日のメイク、どうやったっけ？」<br /><br />
-                    そう思ったこと、ありませんか？<br />
+                    「あの日のメイク、どうやったっけ？」<br />
+                    そう思ったこと、ありませんか？<br /><br />
                     元ヘアメイクアーティストが作った、メイク好きのための記録・管理アプリです。<br /><br />
                     '美しい' には理由がある。<br /><br />
                     「メイクをレシピ化する思考」を、毎日のメイクに取り入れてみてください。
