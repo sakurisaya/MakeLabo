@@ -291,7 +291,7 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
 
                             {/* 今日の塗り方メモ */}
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-pink-400 ml-1">TODAY'S TECHNIQUE (FOR RECIPE)</label>
+                                <label className="text-[10px] font-bold text-pink-400 ml-1">TODAY'S POINT (FOR RECIPE)</label>
                                 <textarea value={item.usageMemo} onChange={e => updateItem(item.id, { usageMemo: e.target.value })}
                                     className="w-full px-4 py-3 bg-white rounded-xl border border-pink-100 outline-none focus:ring-2 focus:ring-pink-200 text-sm h-24 resize-none shadow-sm"
                                     placeholder="この日の塗り方のコツ（例：目尻に薄く、指でポンポンと...）" />
@@ -457,4 +457,4 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
             )}
         </div>
     );
-};
+};

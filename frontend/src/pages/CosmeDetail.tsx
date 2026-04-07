@@ -103,7 +103,7 @@ export const CosmeDetail = () => {
     }, [id]);
 
     const handleDelete = async () => {
-        if (!window.confirm("表示されているこのコスメ（全バリエーション）を削除してもよろしいですか？")) return;
+        if (!window.confirm("表示されているこのコスメを削除してもよろしいですか？")) return;
         try {
             await Promise.all(variations.map(v => axios.delete(`/cosmetics/${v.id}`)));
             navigate('/cosme');

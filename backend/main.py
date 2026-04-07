@@ -94,6 +94,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- キャッシュ無効化ミドルウェア ---
+# CloudFront等のCDNやブラウザがGETリクエストを勝手に長期間キャッシュし、
+# 古いデータ（増幅したり消えたりするバグの原因）を返すのを防ぎ、常に最新のDBデータを取得させます。
+@app.middleware("http")
+async def add_cache_control_header(request, call_next):
+    response = await call_next(request)
+    # APIのレスポンスに対しては強力にキャッシュを禁止
+    if request.url.path.startswith("/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
 # 保存された画像（static/images内）をURLで公開（http://localhost:8000/static/...）
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 

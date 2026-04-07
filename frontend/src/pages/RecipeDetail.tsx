@@ -250,9 +250,9 @@ export const RecipeDetail = () => {
                                                         <div className="bg-pink-50/80 border border-pink-100 rounded-xl p-2.5">
                                                             <div className="flex items-center gap-1.5 mb-1">
                                                                 <MessageCircle size={10} className="text-pink-400" />
-                                                                <span className="text-[8px] font-black text-pink-400 uppercase tracking-widest">Technique</span>
+                                                                <span className="text-[8px] font-black text-pink-400 uppercase tracking-widest">POINT</span>
                                                             </div>
-                                                            <p className="text-[11px] text-slate-600 italic leading-relaxed">「{item.usageMemo}」</p>
+                                                            <p className="text-[11px] text-slate-600 italic leading-relaxed">{item.usageMemo}</p>
                                                         </div>
                                                     )}
 
