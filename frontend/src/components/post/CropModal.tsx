@@ -31,8 +31,7 @@ export const CropModal: React.FC<CropModalProps> = ({ imageUrl, onClose, onCompl
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/90 backdrop-blur-sm p-4 pb-24 h-screen w-screen justify-center animate-in fade-in duration-300">
-
+        <div className="fixed inset-0 z-50 flex flex-col bg-slate-900/90 backdrop-blur-sm p-4 pb-24 justify-center animate-in fade-in duration-300">
             <div className="relative flex-1 w-full max-w-lg mx-auto h-[70vh] rounded-3xl overflow-hidden bg-black shadow-2xl">
                 <Cropper
                     image={imageUrl}
