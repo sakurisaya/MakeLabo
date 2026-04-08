@@ -168,7 +168,7 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
                     is_thumbnail: s.isThumbnail,
                     is_make_map: s.isMakeMap,
                     items: s.pins.flatMap(p => (p.items || []).map(item => ({
-                        cosmetic_master_id: item.isFromDictionary ? parseInt(item.id.replace('edit-', ''), 10) : null,
+                        cosmetic_master_id: item.isFromDictionary ? (item.cosmetic_master_id || null) : null,
                         x_position: p.x,
                         y_position: p.y,
                         pin_memo: item.usageMemo || "", // レシピ固有
