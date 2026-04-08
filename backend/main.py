@@ -72,11 +72,15 @@ def create_initial_users(db: Session):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """アプリが起動・終了する際の特殊イベントを管理"""
-    db = database.SessionLocal()
-    try:
-        create_initial_users(db)
-    finally:
-        db.close()
+    # DATABASE_URL が設定されていない（＝ローカル環境の）時のみ見本データを作成
+    if not os.getenv("DATABASE_URL"):
+        db = database.SessionLocal()
+        try:
+            create_initial_users(db)
+        finally:
+            db.close()
+    else:
+        print("Running in Production (External DB). Skipping default user creation.")
     yield
 
 # FastAPIアプリのインスタンス生成
@@ -196,8 +200,35 @@ async def upload_image(file: UploadFile = File(...)):
         ratio = max_size / max(img.width, img.height)
         img = img.resize((int(img.width * ratio), int(img.height * ratio)), Image.Resampling.LANCZOS)
 
-    # 3. 圧縮（quality=85）して保存
+    # 3. 圧縮（quality=85）して一時保存
     img.save(file_path, "JPEG", quality=85, optimize=True)
+
+    # 4. クラウド環境（S3バケット名が設定されている）場合、S3にアップロードして絶対URLを返す
+    s3_bucket = os.getenv("S3_BUCKET_NAME")
+    if s3_bucket:
+        try:
+            import boto3
+            aws_region = os.getenv("AWS_REGION", "ap-northeast-1")
+            s3_client = boto3.client('s3', region_name=aws_region)
+            s3_key = f"images/{file_name}"
+            
+            s3_client.upload_file(
+                file_path, s3_bucket, s3_key, 
+                ExtraArgs={'ContentType': 'image/jpeg'}
+            )
+            s3_url = f"https://{s3_bucket}.s3.{aws_region}.amazonaws.com/{s3_key}"
+            
+            # 容量節約のためローカルの一時ファイルは削除
+            try:
+                os.remove(file_path)
+            except:
+                pass
+                
+            return {"image_url": s3_url}
+        except Exception as e:
+            print(f"S3 Upload failed: {str(e)}")
+
+    # ローカル環境用（またはS3失敗時のフォールバック）
     return {"image_url": f"/static/images/{file_name}"}
 
 
