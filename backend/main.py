@@ -110,6 +110,13 @@ async def add_cache_control_header(request, call_next):
 # 保存された画像（static/images内）をURLで公開（http://localhost:8000/static/...）
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
+# --- AWS ELB/ヘルスチェック用エンドポイント ---
+# AWS Elastic Beanstalkのロードバランサーは、デフォルトで「/」にアクセスして
+# アプリが生きているか確認（ヘルスチェック）します。これが無いとインスタンスが破棄・再起動を繰り返します。
+@app.get("/")
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 # --- 3. 認証・DB操作の依存関係 (Dependencies) ---
 
