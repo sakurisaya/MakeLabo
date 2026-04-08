@@ -537,3 +537,10 @@ def read_my_recipes(db: Session = Depends(get_db), current_user: models.User = D
 def get_recipe_index(db: Session = Depends(get_db)):
     """カレンダー・アーカイブ表示用に、年月別の投稿数を集計"""
     return db.query(func.strftime('%Y-%m', models.Recipe.date).label('month'), func.count(models.Recipe.id).label('count')).group_by('month').order_by(models.Recipe.date.desc()).all()
+
+# --- 5. アプリケーション起設定 ---
+if __name__ == "__main__":
+    import uvicorn
+    # EB等のクラウド環境では環境変数 PORT を優先し、ローカルでは 8000 を使用する
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)

@@ -237,7 +237,7 @@ export const CosmeList = () => {
 
                                     {/* 右上のメニューボタン */}
                                     <button
-                                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-md rounded-full text-slate-400 opacity-0 group-hover:opacity-100 transition-all hover:text-pink-500 shadow-sm"
+                                        className="absolute top-2 right-2 p-2 bg-white/90 backdrop-blur-md rounded-full text-slate-400 transition-all hover:text-pink-500 shadow-sm"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setLongPressedId(mainVariant.id);
