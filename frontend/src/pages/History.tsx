@@ -377,10 +377,10 @@ export const History = ({ onNavigateToPost }: Props) => {
                     onClick={() => { setLongPressedRecipe(null); setMenuPosition(null); }}
                 >
                     <div
-                        className="absolute bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] animate-in zoom-in-95 duration-100 border border-slate-100 overflow-hidden"
+                        className="fixed bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] animate-in zoom-in-95 duration-100 border border-slate-100 overflow-hidden z-50"
                         style={{
-                            left: Math.min(window.innerWidth - 180, menuPosition.x),
-                            top: Math.min(window.innerHeight - 250, menuPosition.y)
+                            left: Math.min(menuPosition.x, window.innerWidth - 190),
+                            top: Math.min(menuPosition.y, window.innerHeight - 280)
                         }}
                         onClick={e => e.stopPropagation()}
                     >

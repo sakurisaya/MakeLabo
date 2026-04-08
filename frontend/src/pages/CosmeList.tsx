@@ -290,10 +290,10 @@ export const CosmeList = () => {
                     onClick={() => { setLongPressedId(null); setMenuPosition(null); }}
                 >
                     <div
-                        className="absolute bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] border border-slate-100 overflow-hidden"
+                        className="fixed bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] border border-slate-100 overflow-hidden z-50"
                         style={{
-                            left: Math.min(window.innerWidth - 180, menuPosition.x),
-                            top: Math.min(window.innerHeight - 250, menuPosition.y)
+                            left: Math.min(menuPosition.x, window.innerWidth - 190),
+                            top: Math.min(menuPosition.y, window.innerHeight - 200)
                         }}
                         onClick={e => e.stopPropagation()}
                     >

@@ -299,10 +299,15 @@ def update_cosmetic(cosmetic_id: int, cosmetic_update: schemas.CosmeticMasterCre
 
 @app.delete("/cosmetics/{cosmetic_id}")
 def delete_cosmetic(cosmetic_id: int, db: Session = Depends(get_db)):
-    """コスメを削除"""
+    """コスメを削除（参照しているItemのcosmetic_master_idをNULLに更新してから削除）"""
     db_cosmetic = db.query(models.CosmeticMaster).filter(models.CosmeticMaster.id == cosmetic_id).first()
     if not db_cosmetic:
         raise HTTPException(status_code=404, detail="Cosmetic not found")
+    
+    # このコスメを参照しているItemのcosmetic_master_idをNULLに（外部キー制約を回避）
+    db.query(models.Item).filter(models.Item.cosmetic_master_id == cosmetic_id).update(
+        {"cosmetic_master_id": None}
+    )
     db.delete(db_cosmetic)
     db.commit()
     return {"message": "Cosmetic deleted successfully"}
