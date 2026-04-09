@@ -72,15 +72,27 @@ def create_initial_users(db: Session):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """アプリが起動・終了する際の特殊イベントを管理"""
-    # DATABASE_URL が設定されていない（＝ローカル環境の）時のみ見本データを作成
     if not os.getenv("DATABASE_URL"):
+        # ローカル環境のみ：見本データを自動作成
         db = database.SessionLocal()
         try:
             create_initial_users(db)
         finally:
             db.close()
     else:
-        print("Running in Production (External DB). Skipping default user creation.")
+        # 本番環境（RDS）：移行後のシーケンスを自動リセット（ID衝突防止）
+        print("Running in Production (External DB). Resetting sequences...")
+        try:
+            from sqlalchemy import text as sql_text
+            with database.engine.connect() as conn:
+                for table in ["users", "cosmetic_masters", "recipes", "recipe_images", "items"]:
+                    conn.execute(sql_text(
+                        f"SELECT setval(pg_get_serial_sequence('{table}', 'id'), COALESCE(MAX(id), 1)) FROM {table}"
+                    ))
+                conn.commit()
+            print("Sequences reset successfully.")
+        except Exception as e:
+            print(f"Sequence reset skipped (non-PostgreSQL or error): {e}")
     yield
 
 # FastAPIアプリのインスタンス生成
