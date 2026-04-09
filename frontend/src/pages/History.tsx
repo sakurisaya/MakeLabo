@@ -17,7 +17,7 @@ export const History = ({ onNavigateToPost }: Props) => {
     const [viewMode, setViewMode] = useState<'card' | 'tile'>(() => {
         return (localStorage.getItem('makelabo_gallery_viewMode') as 'card' | 'tile') || 'card';
     });
-    
+
     useEffect(() => {
         localStorage.setItem('makelabo_gallery_viewMode', viewMode);
     }, [viewMode]);
@@ -95,7 +95,7 @@ export const History = ({ onNavigateToPost }: Props) => {
     }, []);
 
 
-    const handleTouchStart = (recipe: Recipe, e: React.TouchEvent | React.MouseEvent) => {
+    const handleTouchStart = (recipe: Recipe) => {
         longPressTimer.current = setTimeout(() => {
             setLongPressedRecipe(recipe);
         }, 600);
@@ -205,14 +205,14 @@ export const History = ({ onNavigateToPost }: Props) => {
                     // ベース系・ライン系・コントゥアリングは色合いの参考にならないため除外
                     const excludeCats = ["ベース", "アイライナー", "アイブロウ", "マスカラ", "コントゥアリング"];
                     if (excludeCats.includes(cleanCat) || !it.hex) return;
-                    
+
                     const hexStr = it.hex || "#FFFFFF";
                     const key = `${hexStr}-${cleanCat}`;
                     if (!seenMatches.has(key)) {
-                        colors.push({ 
-                            hex: hexStr, 
-                            cat: cleanCat, 
-                            pccs: it.pccsTone ? `${it.pccsTone}${it.pccsHue}` : undefined 
+                        colors.push({
+                            hex: hexStr,
+                            cat: cleanCat,
+                            pccs: it.pccsTone ? `${it.pccsTone}${it.pccsHue}` : undefined
                         });
                         seenMatches.add(key);
                     }
@@ -229,17 +229,17 @@ export const History = ({ onNavigateToPost }: Props) => {
                     <img src={logoImg} alt="logo" className="w-6 object-contain" />
                     Makeup Recipes
                 </h2>
-                
+
                 <div className="flex bg-slate-100/80 p-0.5 rounded-xl shadow-inner mb-2">
-                    <button 
-                        onClick={() => setViewMode('card')} 
+                    <button
+                        onClick={() => setViewMode('card')}
                         className={`p-1.5 rounded-lg transition-all ${viewMode === 'card' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
                         aria-label="カード表示"
                     >
                         <List size={18} />
                     </button>
-                    <button 
-                        onClick={() => setViewMode('tile')} 
+                    <button
+                        onClick={() => setViewMode('tile')}
                         className={`p-1.5 rounded-lg transition-all ${viewMode === 'tile' ? 'bg-white text-pink-500 shadow-sm font-bold' : 'text-slate-400 hover:text-slate-600'}`}
                         aria-label="タイル表示"
                     >
@@ -260,10 +260,10 @@ export const History = ({ onNavigateToPost }: Props) => {
                                 onClick={() => {
                                     if (!longPressedRecipe) navigate(`/recipe/${recipe.id}`, { state: { recipe } });
                                 }}
-                                onMouseDown={(e) => handleTouchStart(recipe, e)}
+                                onMouseDown={() => handleTouchStart(recipe)}
                                 onMouseUp={handleTouchEnd}
                                 onMouseLeave={handleTouchEnd}
-                                onTouchStart={(e) => handleTouchStart(recipe, e)}
+                                onTouchStart={() => handleTouchStart(recipe)}
                                 onTouchEnd={handleTouchEnd}
                                 className={`aspect-square relative cursor-pointer overflow-hidden bg-slate-200 group ${longPressedRecipe?.id === recipe.id ? 'ring-4 ring-pink-500 z-10' : ''}`}
                             >
@@ -273,7 +273,7 @@ export const History = ({ onNavigateToPost }: Props) => {
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                
+
                                 {/* カラーチップ (画像の上に配置) */}
                                 <div className="absolute bottom-1 right-1 flex flex-wrap justify-end gap-[2px] pointer-events-none p-0.5 z-10">
                                     {getRecipeColors(recipe).slice(0, 5).map((c, i) => (
@@ -295,10 +295,10 @@ export const History = ({ onNavigateToPost }: Props) => {
                             onClick={() => {
                                 if (!longPressedRecipe) navigate(`/recipe/${recipe.id}`, { state: { recipe } });
                             }}
-                            onMouseDown={(e) => handleTouchStart(recipe, e)}
+                            onMouseDown={() => handleTouchStart(recipe)}
                             onMouseUp={handleTouchEnd}
                             onMouseLeave={handleTouchEnd}
-                            onTouchStart={(e) => handleTouchStart(recipe, e)}
+                            onTouchStart={() => handleTouchStart(recipe)}
                             onTouchEnd={handleTouchEnd}
                             className={`bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer border border-slate-100 flex h-40 group relative ${longPressedRecipe?.id === recipe.id ? 'ring-4 ring-pink-500/20' : ''}`}
                         >
