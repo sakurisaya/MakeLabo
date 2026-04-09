@@ -255,7 +255,7 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
                             const targetPin = currentSlide.pins.find(p => p.id === selectedPinId);
                             if (selectedPinId && targetPin) {
                                 return (
-                                    <div className="relative z-40 px-2 pb-6 -mt-12">
+                                    <div className="relative z-40 px-2 pb-6 -mt-18">
                                         <div className="w-full max-w-sm mx-auto bg-white/95 backdrop-blur-md rounded-3xl shadow-xl shadow-pink-500/10 animate-in slide-in-from-bottom-5 duration-300 border border-pink-100 overflow-hidden">
                                             <PinDetailForm
                                                 pin={targetPin}
