@@ -23,7 +23,6 @@ export const History = ({ onNavigateToPost }: Props) => {
     }, [viewMode]);
 
     const [longPressedRecipe, setLongPressedRecipe] = useState<Recipe | null>(null);
-    const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
     const longPressTimer = useRef<any | null>(null);
 
     const fetchRecipes = async () => {
@@ -360,7 +359,6 @@ export const History = ({ onNavigateToPost }: Props) => {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setLongPressedRecipe(recipe);
-                                    setMenuPosition({ x: e.clientX, y: e.clientY });
                                 }}
                             >
                                 <MoreVertical size={18} />
@@ -370,18 +368,14 @@ export const History = ({ onNavigateToPost }: Props) => {
                 })}
             </div>
 
-            {/* コンテキストメニュー (長押しまたは点々ボタン) */}
-            {longPressedRecipe && menuPosition && (
+            {/* コンテキストメニュー（中央ボトムシート方式） */}
+            {longPressedRecipe && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/10 backdrop-blur-[2px]"
-                    onClick={() => { setLongPressedRecipe(null); setMenuPosition(null); }}
+                    className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px] flex items-end justify-center pb-6 px-4"
+                    onClick={() => { setLongPressedRecipe(null); }}
                 >
                     <div
-                        className="fixed bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] animate-in zoom-in-95 duration-100 border border-slate-100 overflow-hidden z-50"
-                        style={{
-                            left: Math.min(menuPosition.x, window.innerWidth - 190),
-                            top: Math.min(menuPosition.y, window.innerHeight - 280)
-                        }}
+                        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl py-2 animate-in slide-in-from-bottom-3 duration-200 border border-slate-100 overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="px-4 py-2 border-b border-slate-50 mb-1">

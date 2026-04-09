@@ -146,13 +146,9 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
         });
         const groupList = Object.values(groups);
         groupList.sort((a, b) => {
-            const idxA = CATEGORIES.indexOf(a[0].category);
-            const idxB = CATEGORIES.indexOf(b[0].category);
-            const orderA = idxA === -1 ? 999 : idxA;
-            const orderB = idxB === -1 ? 999 : idxB;
-            if (orderA !== orderB) return orderA - orderB;
-            if (a[0].brand !== b[0].brand) return a[0].brand.localeCompare(b[0].brand);
-            return (a[0].color_number || '').localeCompare(b[0].color_number || '');
+            const maxIdA = Math.max(...a.map((v: any) => v.id));
+            const maxIdB = Math.max(...b.map((v: any) => v.id));
+            return maxIdB - maxIdA;
         });
         // 商品単位（brand+name）でさらにまとめる
         const productMap: Record<string, any[][]> = {};

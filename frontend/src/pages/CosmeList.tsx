@@ -32,7 +32,6 @@ export const CosmeList = () => {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [longPressedId, setLongPressedId] = useState<number | null>(null);
     const [longPressedVariantIds, setLongPressedVariantIds] = useState<number[]>([]);
-    const [menuPosition, setMenuPosition] = useState<{ x: number, y: number } | null>(null);
 
     const fetchCosmetics = async () => {
         try {
@@ -242,7 +241,6 @@ export const CosmeList = () => {
                                             e.stopPropagation();
                                             setLongPressedId(mainVariant.id);
                                             setLongPressedVariantIds(group.variants.map(v => v.id));
-                                            setMenuPosition({ x: e.clientX, y: e.clientY });
                                         }}
                                     >
                                         <MoreVertical size={14} />
@@ -283,20 +281,19 @@ export const CosmeList = () => {
                 </div>
             )}
 
-            {/* アクションメニュー */}
-            {longPressedId && menuPosition && (
+            {/* アクションメニュー（中央ボトムシート方式） */}
+            {longPressedId && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/10 backdrop-blur-[2px]"
-                    onClick={() => { setLongPressedId(null); setMenuPosition(null); }}
+                    className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px] flex items-end justify-center pb-6 px-4"
+                    onClick={() => { setLongPressedId(null); }}
                 >
                     <div
-                        className="fixed bg-white rounded-2xl shadow-2xl py-2 min-w-[160px] border border-slate-100 overflow-hidden z-50"
-                        style={{
-                            left: Math.min(menuPosition.x, window.innerWidth - 190),
-                            top: Math.min(menuPosition.y, window.innerHeight - 200)
-                        }}
+                        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl py-2 border border-slate-100 overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
+                        <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">アクション</p>
+                        </div>
                         <button
                             onClick={() => { navigate(`/cosme/${longPressedId}`); setLongPressedId(null); }}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
