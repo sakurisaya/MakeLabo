@@ -96,12 +96,8 @@ export const History = ({ onNavigateToPost }: Props) => {
 
 
     const handleTouchStart = (recipe: Recipe, e: React.TouchEvent | React.MouseEvent) => {
-        const x = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-        const y = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-
         longPressTimer.current = setTimeout(() => {
             setLongPressedRecipe(recipe);
-            setMenuPosition({ x, y });
         }, 600);
     };
 
