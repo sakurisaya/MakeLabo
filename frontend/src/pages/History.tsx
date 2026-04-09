@@ -368,18 +368,18 @@ export const History = ({ onNavigateToPost }: Props) => {
                 })}
             </div>
 
-            {/* コンテキストメニュー（中央ボトムシート方式） */}
+            {/* コンテキストメニュー（中央ポップアップ方式） */}
             {longPressedRecipe && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px] flex items-end justify-center pb-6 px-4"
+                    className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px] flex items-center justify-center p-4"
                     onClick={() => { setLongPressedRecipe(null); }}
                 >
                     <div
-                        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl py-2 animate-in slide-in-from-bottom-3 duration-200 border border-slate-100 overflow-hidden"
+                        className="w-full max-w-xs bg-white rounded-3xl shadow-2xl py-2 animate-in zoom-in-95 duration-200 border border-slate-100 overflow-hidden"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="px-4 py-2 border-b border-slate-50 mb-1">
-                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Recipe Actions</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Recipe Actions</p>
                         </div>
 
                         <button

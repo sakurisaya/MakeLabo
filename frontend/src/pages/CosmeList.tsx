@@ -281,18 +281,18 @@ export const CosmeList = () => {
                 </div>
             )}
 
-            {/* アクションメニュー（中央ボトムシート方式） */}
+            {/* アクションメニュー（中央ポップアップ方式） */}
             {longPressedId && (
                 <div
-                    className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px] flex items-end justify-center pb-6 px-4"
+                    className="fixed inset-0 z-50 bg-black/20 backdrop-blur-[2px] flex items-center justify-center p-4"
                     onClick={() => { setLongPressedId(null); }}
                 >
                     <div
-                        className="w-full max-w-sm bg-white rounded-3xl shadow-2xl py-2 border border-slate-100 overflow-hidden"
+                        className="w-full max-w-xs bg-white rounded-3xl shadow-2xl py-2 border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200"
                         onClick={e => e.stopPropagation()}
                     >
                         <div className="px-4 py-2 border-b border-slate-50 mb-1">
-                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">アクション</p>
+                            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest text-center">アクション</p>
                         </div>
                         <button
                             onClick={() => { navigate(`/cosme/${longPressedId}`); setLongPressedId(null); }}
