@@ -116,6 +116,8 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
             shadeHexes: shades.slice(0, 4).map((s: any) => s.color_hex),
             masterMemo: first.memo || '',
             cosmetic_master_id: first.id,
+            pccsTone: first.pccs_tone || undefined,
+            pccsHue: first.pccs_hue || undefined,
             saveToMyCosme: false,
             isFromDictionary: true
         });
@@ -276,7 +278,12 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
                                                 className="w-full bg-transparent border-none outline-none text-xs font-bold text-slate-700"
                                             />
                                         )}
-                                        <div className="text-[9px] font-mono text-slate-300 uppercase leading-none">{item.hex || '#------'}</div>
+                                        <div className="text-[9px] font-mono text-slate-300 uppercase leading-none">
+                                            {item.pccsTone && item.pccsHue
+                                                ? `${item.pccsTone}${item.pccsHue}`
+                                                : item.pccsTone || (item.hex ? item.hex.slice(0, 4) + '…' : '------')
+                                            }
+                                        </div>
                                     </div>
                                 </div>
                             </div>
