@@ -148,7 +148,7 @@ export const PortfolioExplanation: React.FC<Props> = ({ onBack }) => {
                         </div>
                         <h3 className="font-bold text-slate-800 mb-2">Backend & API</h3>
                         <p className="text-xs text-slate-500 leading-relaxed mb-3">
-                            FastAPI (Python) / SQLAlchemy / MySQL<br />
+                            FastAPI (Python) / SQLAlchemy / PostgreSQL<br />
                             AWS環境（Elastic Beanstalk / RDS）に構築されたセキュアなRESTful API。PCCS色彩理論を用いた色相・トーンの自動判定アルゴリズムを実装。
                         </p>
                         <div className="flex flex-wrap gap-1">
@@ -185,7 +185,7 @@ export const PortfolioExplanation: React.FC<Props> = ({ onBack }) => {
                             <div className="w-1.5 h-1.5 bg-pink-400 rounded-full mt-1.5 flex-shrink-0" />
                             <div>
                                 <strong className="text-slate-800 block mb-0.5">Amazon RDS (Database)</strong>
-                                フルマネージドなMySQLデータベース。可用性とデータ保護に優れた構成。
+                                フルマネージドなPostgreSQLデータベース。可用性とデータ保護に優れた構成。
                             </div>
                         </li>
                         <li className="flex items-start gap-3">
