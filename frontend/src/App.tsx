@@ -71,7 +71,7 @@ const AppContent = () => {
          <div 
              className="w-full h-[100dvh] overflow-hidden bg-white shadow-xl 
                         lg:w-[390px] lg:h-[95vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-900 
-                        lg:shadow-2xl relative flex flex-col"
+                        lg:shadow-2xl relative flex flex-col lg:max-h-[800px]"
              style={{ transform: 'translateZ(0)' }}
          >
               {/* iPhone ノッチ（モック用デコレーション） */}
