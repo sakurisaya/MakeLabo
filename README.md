@@ -16,15 +16,15 @@
   <div style="display: flex; justify-content: center; gap: 20px;">
     <div style="display: inline-block;">
       <p><b>メイクレシピ詳細</b></p>
-      <img src="./screenshots/recipe.png" width="250">
+      <img src="./screenshots/recipe.png">
     </div>
     <div style="display: inline-block;">
       <p><b>メイクレシピ追加</b></p>
-      <img src="./screenshots/add_recipe.png" width="250">
+      <img src="./screenshots/add_recipe.png">
     </div>
     <div style="display: inline-block;">
       <p><b>コスメ管理</b></p>
-      <img src="./screenshots/cosme.png" width="250">
+      <img src="./screenshots/cosme.png">
     </div>
   </div>
 </div>
