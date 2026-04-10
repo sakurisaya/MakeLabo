@@ -295,10 +295,16 @@ export const CosmeList = () => {
                             <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest text-center">アクション</p>
                         </div>
                         <button
-                            onClick={() => { navigate(`/cosme/${longPressedId}`); setLongPressedId(null); }}
+                            onClick={() => { 
+                                const target = cosmetics.find(c => c.id === longPressedId);
+                                if (target) {
+                                    navigate('/cosme/new', { state: { editCosme: target, returnPath: '/cosme' } });
+                                }
+                                setLongPressedId(null); 
+                            }}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-600 hover:bg-pink-50 hover:text-pink-600 transition-colors"
                         >
-                            <Edit size={16} /> 詳細・編集
+                            <Edit size={16} /> 編集
                         </button>
                         <button
                             onClick={() => handleDuplicate(longPressedId)}

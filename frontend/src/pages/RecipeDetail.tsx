@@ -258,7 +258,7 @@ export const RecipeDetail = () => {
 
                                                     {/* アイテムを編集するボタン */}
                                                     <button
-                                                        onClick={() => navigate('/cosme', {
+                                                        onClick={() => navigate('/cosme/new', {
                                                             state: {
                                                                 editData: item,
                                                                 returnPath: `/recipe/${recipe.id}`
