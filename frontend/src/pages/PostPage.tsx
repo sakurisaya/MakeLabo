@@ -6,7 +6,7 @@ import { PinDetailForm } from '../components/post/PinDetailForm';
 import { DEFAULT_MAKEUP_PINS } from '../constants/defaultPins';
 import DEFAULT_FACE_IMAGE from '../assets/images/noimg_face.png';
 import { CropModal } from '../components/post/CropModal';
-import { Save, ChevronLeft, Plus, Image as ImageIcon, Sparkles, MessageCircle, Tag } from 'lucide-react';
+import { Save, ChevronLeft, Plus, Image as ImageIcon, Sparkles, MessageCircle, Tag, Trash2 } from 'lucide-react';
 import type { PinItem, RecipeSlide } from '../types/recipe';
 
 // --- 2. メインコンポーネント ---
@@ -137,6 +137,28 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
         setSlides(prev => prev.map((s, idx) => ({ ...s, isThumbnail: idx === index })));
     };
 
+    const handleDeleteSlide = (slideId: string) => {
+        if (!window.confirm("この画像を削除しますか？")) return;
+        
+        if (slides.length === 1) {
+            // 1枚のみの場合はデフォルト画像に戻す
+            setSlides(prev => prev.map(s => s.id === slideId ? { ...s, image: DEFAULT_FACE_IMAGE } : s));
+            return;
+        }
+        
+        // 2枚以上の場合はスライドごと削除
+        setSlides(prev => {
+            const targetIndex = prev.findIndex(s => s.id === slideId);
+            const newSlides = prev.filter(s => s.id !== slideId);
+            if (!newSlides.some(s => s.isThumbnail) && newSlides.length > 0) {
+                newSlides[0].isThumbnail = true;
+            }
+            setActiveSlideIndex(Math.min(targetIndex, newSlides.length - 1));
+            setSelectedPinId(null);
+            return newSlides;
+        });
+    };
+
     const handleCropComplete = (croppedUrl: string) => {
         if (!pendingImage) return;
         if (pendingImage.action === 'REPLACE' && pendingImage.targetId) {
@@ -247,6 +269,13 @@ export const PostPage = ({ onBack }: { onBack: () => void }) => {
                                     <Plus size={20} />
                                     <input type="file" className="hidden" onChange={(e) => handleImageChange(e, 'ADD')} accept="image/*" />
                                 </label>
+                                <button
+                                    onClick={() => handleDeleteSlide(currentSlide.id)}
+                                    className="w-10 h-10 bg-white/90 backdrop-blur shadow-md rounded-full flex items-center justify-center cursor-pointer text-slate-600 hover:text-red-500 transition-all"
+                                    title="画像を削除"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
                             </div>
                         </div>
 

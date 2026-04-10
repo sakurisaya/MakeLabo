@@ -145,11 +145,14 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
             groups[key].push(c);
         });
         const groupList = Object.values(groups);
+        
+        // まず新しい順にベースソート
         groupList.sort((a, b) => {
             const maxIdA = Math.max(...a.map((v: any) => v.id));
             const maxIdB = Math.max(...b.map((v: any) => v.id));
             return maxIdB - maxIdA;
         });
+        
         // 商品単位（brand+name）でさらにまとめる
         const productMap: Record<string, any[][]> = {};
         groupList.forEach(shades => {
@@ -157,7 +160,31 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
             if (!productMap[productKey]) productMap[productKey] = [];
             productMap[productKey].push(shades);
         });
-        return Object.values(productMap);
+        
+        const finalProducts = Object.values(productMap);
+        
+        // カテゴリのソート順を定義（指定の順番）
+        const categoryOrder = [
+            "Base", "Eyeshadow", "Eyeliner", "Eyebrow", "Cheek", "Lip", "Contouring"
+        ];
+        
+        finalProducts.sort((a, b) => {
+            const catA = a[0][0].category || "Others";
+            const catB = b[0][0].category || "Others";
+            
+            let idxA = categoryOrder.indexOf(catA);
+            let idxB = categoryOrder.indexOf(catB);
+            
+            if (idxA === -1) idxA = 999;
+            if (idxB === -1) idxB = 999;
+            
+            if (idxA !== idxB) {
+                return idxA - idxB;
+            }
+            return 0; // カテゴリが同じなら上でソートした新しい順を維持
+        });
+        
+        return finalProducts;
     };
 
 

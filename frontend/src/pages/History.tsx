@@ -227,7 +227,7 @@ export const History = ({ onNavigateToPost }: Props) => {
             <div className={`flex items-center justify-between ${viewMode === 'tile' ? 'p-4 pb-2' : 'mb-8'}`}>
                 <h2 className="text-xl font-black text-slate-800 flex items-center gap-3">
                     <img src={logoImg} alt="logo" className="w-6 object-contain" />
-                    Makeup Recipes
+                    MakeLabo Recipes
                 </h2>
 
                 <div className="flex bg-slate-100/80 p-0.5 rounded-xl shadow-inner mb-2">
