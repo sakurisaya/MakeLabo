@@ -165,7 +165,7 @@ export const PinDetailForm = ({ pin, onChange, onClose, onDelete }: Props) => {
         
         // カテゴリのソート順を定義（指定の順番）
         const categoryOrder = [
-            "Base", "Eyeshadow", "Eyeliner", "Eyebrow", "Cheek", "Lip", "Contouring"
+            "ベース", "アイシャドウ", "アイライナー", "マスカラ", "アイブロウ", "チーク", "リップ", "コントゥアリング", "Others"
         ];
         
         finalProducts.sort((a, b) => {
