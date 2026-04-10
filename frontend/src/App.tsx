@@ -32,7 +32,7 @@ const BottomNav = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 lg:absolute lg:bottom-0 lg:left-0 lg:right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around items-center py-3 px-6 z-[100] lg:rounded-b-[36px]">
+    <nav className="fixed bottom-0 left-0 right-0 lg:absolute lg:bottom-0 lg:left-0 lg:right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 flex justify-around items-center pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] px-6 z-[100] lg:rounded-b-[36px]">
       <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${isActive('/') ? 'text-pink-500' : 'text-slate-400'}`}>
         <Calendar size={24} />
         <span className="text-[10px] font-bold">gallery</span>

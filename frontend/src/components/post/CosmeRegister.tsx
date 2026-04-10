@@ -5,6 +5,7 @@ import axios from 'axios';
 import { INITIAL_BRANDS, LOCAL_STORAGE_BRANDS_KEY } from '../../constants/brands';
 import { getDefaultCosmeImage, getFullImageUrl } from '../../utils/imageUtils';
 import { PCCS_TABLE } from '../../constants/pccsTable';
+import { HexColorPicker } from 'react-colorful';
 
 // --- 1. 型定義 (Types) ---
 // TypeScriptでは、データの「形」をあらかじめ決めておくことでミスを防ぎます。
@@ -272,6 +273,7 @@ const CosmeRegister: React.FC = () => {
         return [];
     });
     const [activeColorId, setActiveColorId] = useState<string | null>(colors.length > 0 ? colors[0].id : (editCosme?.hex ? 'edit-color' : null));
+    const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
     // --- ロジック関数 ---
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -536,15 +538,15 @@ const CosmeRegister: React.FC = () => {
 
                             <div className="flex items-center gap-3">
                                 <span className="text-[10px] font-bold text-slate-400 w-10">カスタム</span>
-                                <div className="relative group flex-1 h-10">
-                                    <div className="absolute inset-0 rounded-xl bg-white shadow-sm border border-slate-200 pointer-events-none flex items-center overflow-hidden">
-                                        <div className="w-1/3 h-full" style={{ backgroundColor: colors.find(c => c.id === activeColorId)?.hex, opacity: (colors.find(c => c.id === activeColorId)?.transparency ?? 100) / 100 }} />
-                                        <div className="flex-1 px-3 text-xs font-mono font-bold text-slate-400 bg-slate-50 border-l border-slate-100 text-center flex items-center justify-center">
-                                            {colors.find(c => c.id === activeColorId)?.hex.substring(0, 7).toUpperCase()}
-                                        </div>
+                                <button 
+                                    onClick={() => setIsColorPickerOpen(true)}
+                                    className="relative group flex-1 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center overflow-hidden hover:border-pink-300 transition-colors"
+                                >
+                                    <div className="w-1/3 h-full" style={{ backgroundColor: colors.find(c => c.id === activeColorId)?.hex, opacity: (colors.find(c => c.id === activeColorId)?.transparency ?? 100) / 100 }} />
+                                    <div className="flex-1 px-3 text-xs font-mono font-bold text-slate-400 bg-slate-50 border-l border-slate-100 text-center flex items-center justify-center">
+                                        {colors.find(c => c.id === activeColorId)?.hex.substring(0, 7).toUpperCase()}
                                     </div>
-                                    <input type="color" value={colors.find(c => c.id === activeColorId)?.hex.substring(0, 7)} onChange={e => updateColorField(activeColorId, 'hex', e.target.value)} className="h-full w-full opacity-0 cursor-pointer" />
-                                </div>
+                                </button>
                             </div>
 
                             <div className="flex items-center gap-3">
@@ -601,6 +603,43 @@ const CosmeRegister: React.FC = () => {
             <datalist id="brand-list">
                 {brands.map(b => <option key={b} value={b} />)}
             </datalist>
+
+            {/* カラーピッカーモーダル */}
+            {isColorPickerOpen && activeColorId && (
+                <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsColorPickerOpen(false)}>
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl flex flex-col items-center space-y-6" onClick={e => e.stopPropagation()}>
+                        <h3 className="text-sm font-black text-slate-800 tracking-widest uppercase">Select Color</h3>
+                        
+                        <div className="w-full flex justify-center">
+                            <HexColorPicker 
+                                color={colors.find(c => c.id === activeColorId)?.hex.substring(0, 7)} 
+                                onChange={(newHex) => updateColorField(activeColorId, 'hex', newHex)} 
+                            />
+                        </div>
+                        
+                        {/* Selected Color & Manual Input */}
+                        <div className="w-full flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full shadow-inner ring-1 ring-black/10" style={{ backgroundColor: colors.find(c => c.id === activeColorId)?.hex.substring(0, 7) }}></div>
+                            <input 
+                                type="text"
+                                maxLength={7}
+                                value={colors.find(c => c.id === activeColorId)?.hex.substring(0, 7)}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    updateColorField(activeColorId, 'hex', val.startsWith('#') ? val : '#' + val);
+                                }}
+                                className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-center font-mono text-sm uppercase outline-none focus:ring-2 focus:ring-pink-200"
+                            />
+                        </div>
+
+                        <div className="w-full pt-2">
+                            <button onClick={() => setIsColorPickerOpen(false)} className="w-full py-3 bg-pink-50 text-pink-600 rounded-xl font-bold text-xs hover:bg-pink-100 transition-colors">
+                                完了
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
