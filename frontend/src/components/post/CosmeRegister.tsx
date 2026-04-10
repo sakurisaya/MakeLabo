@@ -536,17 +536,22 @@ const CosmeRegister: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
-                                <span className="text-[10px] font-bold text-slate-400 w-10">カスタム</span>
-                                <button 
-                                    onClick={() => setIsColorPickerOpen(true)}
-                                    className="relative group flex-1 h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center overflow-hidden hover:border-pink-300 transition-colors"
-                                >
-                                    <div className="w-1/3 h-full" style={{ backgroundColor: colors.find(c => c.id === activeColorId)?.hex, opacity: (colors.find(c => c.id === activeColorId)?.transparency ?? 100) / 100 }} />
-                                    <div className="flex-1 px-3 text-xs font-mono font-bold text-slate-400 bg-slate-50 border-l border-slate-100 text-center flex items-center justify-center">
-                                        {colors.find(c => c.id === activeColorId)?.hex.substring(0, 7).toUpperCase()}
-                                    </div>
-                                </button>
+                            <div className="flex items-start gap-3">
+                                <span className="text-[10px] font-bold text-slate-400 w-10 mt-3">カスタム</span>
+                                <div className="flex-1">
+                                    <button 
+                                        onClick={() => setIsColorPickerOpen(true)}
+                                        className="relative group w-full h-10 rounded-xl bg-white shadow-sm border border-slate-200 flex items-center overflow-hidden hover:border-pink-300 transition-colors"
+                                    >
+                                        <div className="w-1/3 h-full" style={{ backgroundColor: colors.find(c => c.id === activeColorId)?.hex, opacity: (colors.find(c => c.id === activeColorId)?.transparency ?? 100) / 100 }} />
+                                        <div className="flex-1 px-3 text-xs font-mono font-bold text-slate-400 bg-slate-50 border-l border-slate-100 text-center flex items-center justify-center">
+                                            {colors.find(c => c.id === activeColorId)?.hex.substring(0, 7).toUpperCase()}
+                                        </div>
+                                    </button>
+                                    <p className="text-[9px] text-slate-400 font-bold mt-1.5 ml-1">
+                                        💡 バーをタップして色を微調整
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-3">
@@ -606,8 +611,8 @@ const CosmeRegister: React.FC = () => {
 
             {/* カラーピッカーモーダル */}
             {isColorPickerOpen && activeColorId && (
-                <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setIsColorPickerOpen(false)}>
-                    <div className="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl flex flex-col items-center space-y-6" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[200] bg-transparent flex items-end justify-center pb-[calc(env(safe-area-inset-bottom,0px)+24px)] px-4 pt-4 animate-in fade-in duration-200" onClick={() => setIsColorPickerOpen(false)}>
+                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 w-full max-w-[320px] shadow-[0_8px_30px_rgb(0,0,0,0.15)] ring-1 ring-slate-900/5 flex flex-col items-center space-y-5 animate-in slide-in-from-bottom-8 duration-300" onClick={e => e.stopPropagation()}>
                         <h3 className="text-sm font-black text-slate-800 tracking-widest uppercase">Select Color</h3>
                         
                         <div className="w-full flex justify-center">

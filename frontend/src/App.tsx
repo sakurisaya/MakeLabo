@@ -69,10 +69,9 @@ const AppContent = () => {
          {/* iPhone風フレーム */}
          {/* transform: translateZ(0) でfixed要素（BottomNav）のアンカーをこの領域に閉じ込める */}
          <div 
-             className="w-full h-[100dvh] overflow-hidden bg-white shadow-xl 
-                        lg:w-[390px] lg:h-[95vh] lg:rounded-[48px] lg:border-[7px] lg:border-slate-900 
-                        lg:shadow-2xl relative flex flex-col lg:max-h-[800px]"
-             style={{ transform: 'translateZ(0)' }}
+             className="w-full min-h-[100dvh] overflow-hidden bg-white shadow-xl 
+                        lg:w-[390px] lg:h-[95vh] lg:min-h-0 lg:rounded-[48px] lg:border-[7px] lg:border-slate-900 
+                        lg:shadow-2xl relative flex flex-col lg:max-h-[800px] lg:[transform:translateZ(0)]"
          >
               {/* iPhone ノッチ（モック用デコレーション） */}
               <div className="hidden lg:block absolute top-0 inset-x-0 h-4 bg-slate-900 rounded-b-3xl w-40 mx-auto z-[120]"></div>
@@ -80,7 +79,7 @@ const AppContent = () => {
               <ScrollToTop />
               
               {/* アプリのメインコンテンツ（スクロール可能エリア） */}
-              <main id="main-scroll-container" className="flex-1 w-full bg-white relative pb-20 overflow-y-auto overflow-x-hidden hide-scrollbar">
+              <main id="main-scroll-container" className="flex-1 w-full bg-white relative pb-[calc(env(safe-area-inset-bottom,0px)+100px)] overflow-y-auto overflow-x-hidden hide-scrollbar">
                 <Routes>
                   <Route path="/" element={<History onNavigateToPost={(data) => navigate("/post", { state: { initialData: data } })} />} />
                   <Route path="/recipe/:id" element={<RecipeDetail />} />
