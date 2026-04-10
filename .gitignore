@@ -17,3 +17,8 @@ frontend/dist/
 # メモ・ドキュメント（公開不要）
 memo/
 docs/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
