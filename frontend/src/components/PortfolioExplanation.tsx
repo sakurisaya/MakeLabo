@@ -39,8 +39,8 @@ export const PortfolioExplanation: React.FC<Props> = ({ onBack }) => {
                 <p className="text-slate-500 leading-relaxed pt-2">
                     「あの日のメイク、どうやったっけ？」<br />
                     そう思ったこと、ありませんか？<br /><br />
-                    元ヘアメイクアーティストが作った、メイク好きのための記録・管理アプリです。<br /><br />
-                    '美しい' には理由がある。<br /><br />
+                    MakeLaboは元ヘアメイクアーティストが作った、メイク好きのための記録・管理アプリです。<br /><br />
+                    '美しい' には理由がある。<br />
                     「メイクをレシピ化する思考」を、毎日のメイクに取り入れてみてください。
                 </p>
             </header>
