@@ -356,7 +356,7 @@ const CosmeRegister: React.FC = () => {
             if (editCosmeId) {
                 // 更新モード (複数色の追加/更新/削除を処理)
                 const variations = location.state?.variations;
-                const originalIds: number[] = variations ? variations.map((v: any) => v.id) : [editCosmeId];
+                const originalIds: number[] = variations ? variations.map((v: any) => Number(v.id)) : [Number(editCosmeId)];
                 const currentEditIds = uniqueColors.filter(c => c.id.startsWith('edit-')).map(c => parseInt(c.id.replace('edit-', '')));
                 const toDelete = originalIds.filter(id => !currentEditIds.includes(id));
 
