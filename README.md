@@ -12,22 +12,22 @@
 
 ![トップ画面](./screenshots/top.png)
 
-<table style="border: none; border-collapse: collapse;">
-  <tr style="border: none;">
-    <td align="center" style="border: none; padding: 10px;">
-      <b>メイクレシピ詳細</b><br>
-      <img src="./screenshots/recipe.png" width="250px">
-    </td>
-    <td align="center" style="border: none; padding: 10px;">
-      <b>メイクレシピ追加</b><br>
-      <img src="./screenshots/add_recipe.png" width="250px">
-    </td>
-    <td align="center" style="border: none; padding: 10px;">
-      <b>コスメ管理</b><br>
-      <img src="./screenshots/cosme.png" width="250px">
-    </td>
-  </tr>
-</table>
+<div align="center">
+  <div style="display: flex; justify-content: center; gap: 20px;">
+    <div style="display: inline-block;">
+      <p><b>メイクレシピ詳細</b></p>
+      <img src="./screenshots/recipe.png" width="250">
+    </div>
+    <div style="display: inline-block;">
+      <p><b>メイクレシピ追加</b></p>
+      <img src="./screenshots/add_recipe.png" width="250">
+    </div>
+    <div style="display: inline-block;">
+      <p><b>コスメ管理</b></p>
+      <img src="./screenshots/cosme.png" width="250">
+    </div>
+  </div>
+</div>
 ---
 
 
