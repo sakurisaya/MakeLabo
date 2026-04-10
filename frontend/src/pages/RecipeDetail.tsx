@@ -18,6 +18,29 @@ export const RecipeDetail = () => {
     const [selectedPin, setSelectedPin] = useState<PinItem | null>(null);
     const [expandedItemIdx, setExpandedItemIdx] = useState<number | null>(null);
 
+    const [touchStartPos, setTouchStartPos] = useState<number | null>(null);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setTouchStartPos(e.touches[0].clientX);
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (!touchStartPos || !recipe?.slides) return;
+        const touchEndPos = e.changedTouches[0].clientX;
+        const distance = touchStartPos - touchEndPos;
+
+        if (distance > 50 && activeSlideIndex < recipe.slides.length - 1) {
+            setActiveSlideIndex(prev => prev + 1);
+            setSelectedPin(null);
+            setExpandedItemIdx(null);
+        } else if (distance < -50 && activeSlideIndex > 0) {
+            setActiveSlideIndex(prev => prev - 1);
+            setSelectedPin(null);
+            setExpandedItemIdx(null);
+        }
+        setTouchStartPos(null);
+    };
+
     useEffect(() => {
         if (location.state?.recipe) return;
         const fetchRecipe = async () => {
@@ -143,7 +166,11 @@ export const RecipeDetail = () => {
 
             <div>
                 {/* メインビュー - フル幅・角なし */}
-                <div className="relative overflow-hidden bg-white aspect-[3/4] w-full">
+                <div 
+                    className="relative overflow-hidden bg-white aspect-[3/4] w-full"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <div onClick={handleImageAreaClick} className="w-full h-full cursor-pointer">
                         <MakeupCanvas
                             imageUrl={currentSlide?.image || DEFAULT_FACE_IMAGE}

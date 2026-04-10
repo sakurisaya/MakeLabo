@@ -422,7 +422,7 @@ const CosmeRegister: React.FC = () => {
                 </button>
                 <div className="flex flex-col items-center">
                     <span className="text-[8px] font-black text-slate-300 uppercase tracking-[0.2em] leading-none mb-1">Cosmetics</span>
-                    <h1 className="text-sm font-black text-slate-800 tracking-tight">{editCosme?.id ? "コスメ編集" : "コスメ登録"}</h1>
+                    <h1 className="text-sm font-black text-slate-800 tracking-tight">{editCosme?.id ? "アイテム編集" : "コスメ登録"}</h1>
                 </div>
                 <button onClick={handleSave} disabled={colors.length === 0 || !brand || !name} className="flex items-center gap-1 bg-pink-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-md shadow-pink-200 hover:bg-pink-600 active:scale-95 disabled:opacity-50 transition-all">
                     <Save size={14} /> 保存
