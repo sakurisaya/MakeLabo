@@ -3,7 +3,7 @@
 メイク好きのための記録・管理Webアプリ。
 「なんとなく」になりがちな毎日のメイクを詳細にレシピ化し、再現性と色彩感覚を高めるためのプラットフォームです。
 
-<a href="https://main.d2jqhenkd2g20n.amplifyapp.com/" target="_blank" rel="noopener noreferrer">🔗 <b>アプリを見る</b></a>
+🔗 **[アプリを見る](https://main.d2jqhenkd2g20n.amplifyapp.com/)**  
 ※ ご確認いただきやすいよう、**ユーザー登録・ログイン不要ですぐに全機能をお試しいただける**ゲストモード（共通テストアカウントへの自動接続）として公開しています。
 
 ---
